@@ -50,6 +50,7 @@ td.num{font-variant-numeric:tabular-nums;}
 .dow{font-size:12px;opacity:.65;}
 .holTag{color:#5a8a3a;margin-left:5px;font-size:10px;}
 input[type=time]{border:1px solid var(--line);border-radius:7px;padding:5px 4px;font-size:14px;font-family:inherit;background:#fffdf8;color:var(--ink);width:92%;appearance:none;-webkit-appearance:none;}
+.timeText{border:1px solid var(--line);border-radius:7px;padding:6px 4px;font-size:15px;font-family:inherit;background:#fffdf8;color:var(--ink);width:74px;max-width:90%;text-align:center;font-variant-numeric:tabular-nums;}
 .noteInput{border:1px solid var(--line);border-radius:7px;padding:5px 8px;font-size:13px;font-family:inherit;background:#fffdf8;color:var(--ink);width:100%;min-width:110px;}
 td.note{text-align:left;min-width:120px;}
 .xbtn{width:30px;height:30px;border-radius:8px;border:1px solid var(--line);background:#fff;cursor:pointer;font-size:14px;color:var(--gold);font-weight:700;line-height:1;}
@@ -113,6 +114,10 @@ button:active{transform:scale(.97);}
   .psum td.val{font-weight:700;font-size:11px;font-variant-numeric:tabular-nums;padding-top:1px;}
   .psum td.acc{color:#b06a00;background:#fff4e6;}
   .pfoot{margin-top:6px;font-size:8px;color:#9a8757;text-align:center;}
+  .psign{display:flex;justify-content:space-between;gap:40px;margin-top:26px;}
+  .sigBox{flex:1;text-align:center;}
+  .sigLine{border-top:1px solid #6e6248;margin-bottom:4px;height:24px;}
+  .sigLbl{font-size:9px;color:#6e6248;text-transform:uppercase;letter-spacing:.4px;}
   /* column widths */
   .ptab col.cD{width:13%;} .ptab col.cT{width:10%;} .ptab col.cP{width:8%;}
   .ptab col.cW{width:10%;} .ptab col.cX{width:6.5%;} .ptab col.cN{width:auto;}
@@ -142,6 +147,19 @@ function holidays(y){const f=[[1,1],[1,6],[5,1],[5,8],[7,5],[8,29],[9,1],[9,15],
 /* ====== ČAS ====== */
 function toMin(t){if(!t)return null;const p=t.split(":");const h=+p[0],m=+p[1];if(isNaN(h)||isNaN(m))return null;return h*60+m;}
 function round15(t){if(!t)return t;const m=toMin(t);if(m===null)return t;let r=Math.round(m/15)*15;if(r>=1440)r=1425;return String(Math.floor(r/60)).padStart(2,"0")+":"+String(r%60).padStart(2,"0");}
+/* voľné vpisovanie: prijme "7", "7:30", "730", "7.30", "0730" a vráti HH:MM zaokrúhlené na 15 min */
+function parseTime(raw){
+  if(!raw)return"";
+  let s=String(raw).trim().replace(/\./g,":").replace(/\s/g,"");
+  if(s==="")return"";
+  let h,m;
+  if(s.indexOf(":")>=0){const p=s.split(":");h=parseInt(p[0],10);m=parseInt(p[1]||"0",10);}
+  else{const d=s.replace(/\D/g,"");if(d.length<=2){h=parseInt(d,10);m=0;}else{h=parseInt(d.slice(0,d.length-2),10);m=parseInt(d.slice(-2),10);}}
+  if(isNaN(h))return"";
+  if(isNaN(m))m=0;
+  h=Math.max(0,Math.min(23,h)); m=Math.max(0,Math.min(59,m));
+  return round15(String(h).padStart(2,"0")+":"+String(m).padStart(2,"0"));
+}
 function breakFor(w){if(w>12.5)return 1;if(w>=5)return 0.5;return 0;}
 function shift(arr,dep){const a=toMin(arr),d0=toMin(dep);if(a===null||d0===null)return null;let d=d0;if(d<=a)d+=1440;const gm=d-a;if(gm<=0)return null;const gh=gm/60;const brk=breakFor(gh);let night=0;for(let mm=a;mm<d;mm++){const t=((mm%1440)+1440)%1440;if(t>=1320||t<360)night++;}return{brk,worked:gh-brk,night:night/60};}
 function dim(y,m){return new Date(y,m+1,0).getDate();}
@@ -307,8 +325,8 @@ function render(){
       const cls=r.hol?"hol":(r.isSun?"sun":(r.isSat?"sat":""));
       html+=`<tr class="${cls}">
         <td class="date"><span class="dnum">${r.day}.</span><span class="dow">${DOW[r.dow]}</span>${r.hol?'<span class="holTag">●</span>':''}</td>
-        <td><input type="time" step="900" value="${r.arr}" onchange="setCell(${r.day},'arr',round15(this.value))"></td>
-        <td><input type="time" step="900" value="${r.dep}" onchange="setCell(${r.day},'dep',round15(this.value))"></td>
+        <td><input class="timeText" type="text" inputmode="numeric" value="${r.arr}" placeholder="–:–" onchange="setCell(${r.day},'arr',parseTime(this.value))"></td>
+        <td><input class="timeText" type="text" inputmode="numeric" value="${r.dep}" placeholder="–:–" onchange="setCell(${r.day},'dep',parseTime(this.value))"></td>
         <td class="num" style="opacity:.7">${r.brk?r.brk.toFixed(1):"—"}</td>
         <td class="num" style="font-weight:700">${r.worked?r1(r.worked).toFixed(2):"—"}</td>
         <td><button class="xbtn ${r.lunch?'on':''}" onclick="setCell(${r.day},'lunch',${!r.lunch})">${r.lunch?"✕":""}</button></td>
@@ -334,7 +352,7 @@ function render(){
       <tr><td>Práca v noci (22–6)</td><td class="v">${r1(sm.night).toFixed(2)} h</td></tr>
       <tr class="accent"><td>Nadčas (nad fond)</td><td class="v">${r1(sm.overtime).toFixed(2)} h</td></tr>
     </tbody></table>
-    <div class="sumNote">Obedy: <b>${sm.lunch}</b> · Večere: <b>${sm.dinner}</b></div>
+    <div class="sumNote">Obedy: <b>${sm.lunch}</b> · Večere: <b>${sm.dinner}</b> · Strava spolu: <b>${sm.lunch+sm.dinner}</b></div>
     <div class="sumNote2">Prestávka automaticky: 5–12,5 h → 0,5 h, nad 12,5 h → 1 h. Nadčas = odpracované hodiny nad mesačný pracovný fond.</div>
     </div>`;
   }
@@ -434,6 +452,7 @@ async function printAll(){
           <td class="k">Noc 22–6</td>
           <td class="k acc">Nadčas</td>
           <td class="k">Obed/Več.</td>
+          <td class="k">Strava spolu</td>
         </tr>
         <tr>
           <td class="val">${sm.fund} h</td>
@@ -444,8 +463,13 @@ async function printAll(){
           <td class="val">${r1(sm.night).toFixed(2)} h</td>
           <td class="val acc">${r1(sm.overtime).toFixed(2)} h</td>
           <td class="val">${sm.lunch} / ${sm.dinner}</td>
+          <td class="val">${sm.lunch+sm.dinner}</td>
         </tr>
       </tbody></table>
+      <div class="psign">
+        <div class="sigBox"><div class="sigLine"></div><div class="sigLbl">Podpis zamestnanca</div></div>
+        <div class="sigBox"><div class="sigLine"></div><div class="sigLbl">Schválil</div></div>
+      </div>
       <div class="pfoot">Hotel Demänová · Dochádzka ${MONTHS[st.month]} ${st.year} · ${esc(emp.name)}</div>
     </section>`;
   });
