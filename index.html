@@ -15,6 +15,7 @@
 html,body{margin:0;}
 body{background:var(--cream);color:var(--ink);font-family:'Inria Serif',Georgia,serif;padding-bottom:50px;}
 .wrap{max-width:760px;margin:0 auto;min-height:100vh;}
+.wrap.wide{max-width:1120px;}
 header{position:sticky;top:0;z-index:20;background:linear-gradient(180deg,#fffdf8,#fbf5ea);
   border-bottom:1px solid var(--line);padding:14px 16px 12px;box-shadow:0 6px 18px -12px rgba(80,60,20,.4);}
 .brandRow{display:flex;align-items:center;gap:10px;}
@@ -122,45 +123,72 @@ button:active{transform:scale(.97);}
 .badge.in{background:#eaf3e3;color:#3c6a26;font-weight:700;}
 .badge.out{background:#f3ecdc;color:#6e6248;}
 .badge.none{opacity:.4;}
+.allTab tr.atWork td,.allTab tr.atWork td.nm,.allTab tbody tr.atWork:hover td{background:#dcefd0;}
+.allTab tr.atWork td.nm{box-shadow:inset 4px 0 0 #4f7a3a;}
+.allTab tr.atWork .badge.in{background:#4f7a3a;color:#fff;}
+.admChk{width:20px;height:20px;accent-color:var(--gold);cursor:pointer;}
+.inNow{padding:0 16px 10px;font-size:14px;}
+.inNow i{display:inline-block;width:10px;height:10px;border-radius:50%;background:#4f7a3a;margin-right:7px;}
+.undoBtn{margin-left:10px;padding:4px 12px;border-radius:999px;border:1px solid #b9d3a8;background:#fff;color:#3c6a26;font-size:12px;cursor:pointer;font-family:inherit;}
 input:focus-visible,button:focus-visible{outline:2px solid var(--gold);outline-offset:1px;}
 
 /* ====== TLAČ ====== */
 #printArea{display:none;}
 @media screen{ body.printing > .wrap{display:none;} body.printing #printArea{display:block;} }
 @media print{
-  @page{ size:A4; margin:8mm 10mm; }
-  body{background:#fff;}
+  @page{ size:A4 portrait; margin:10mm 11mm 9mm; }
+  html,body{background:#fff;padding:0;}
   body > .wrap{display:none !important;}
   #printArea{display:block !important;}
-  .page{page-break-after:always;break-after:page;page-break-inside:avoid;}
-  .page:last-child{page-break-after:auto;}
-  .phead{display:flex;align-items:baseline;justify-content:space-between;border-bottom:1.5px solid var(--gold);padding-bottom:4px;margin-bottom:6px;}
-  .pname{font-family:'Playfair Display',serif;font-size:17px;font-weight:800;color:var(--ink);}
-  .pmonth{font-size:11px;color:#8a7c5e;}
-  table.ptab{width:100%;border-collapse:collapse;font-size:8.6px;margin-bottom:7px;table-layout:fixed;}
-  .ptab th{background:#f2ead8;border:1px solid #d8c9a8;padding:1.5px 3px;font-size:7px;text-transform:uppercase;color:#6e6248;line-height:1.1;}
-  .ptab td{border:1px solid #e3d8c2;padding:1px 3px;text-align:center;line-height:1.25;}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  /* strana = presne tlačová plocha A4 (297 − 19 mm), obsah roztiahnutý na celú výšku */
+  .page{height:277mm;display:flex;flex-direction:column;page-break-after:always;break-after:page;page-break-inside:avoid;break-inside:avoid;overflow:hidden;}
+  .page:last-child{page-break-after:auto;break-after:auto;}
+  .phead{display:flex;align-items:flex-end;justify-content:space-between;border-bottom:2px solid var(--gold);padding-bottom:2.5mm;margin-bottom:3mm;}
+  .pkick{font-size:8.5pt;letter-spacing:1.4px;text-transform:uppercase;color:#8a7c5e;margin-bottom:1mm;}
+  .pname{font-family:'Playfair Display',Georgia,serif;font-size:19pt;font-weight:800;color:var(--ink);line-height:1.05;}
+  .pmonth{font-family:'Playfair Display',Georgia,serif;font-size:14pt;font-weight:700;color:var(--ink);text-align:right;line-height:1.1;}
+  .pmonth small{display:block;font-family:'Inria Serif',Georgia,serif;font-size:8.5pt;font-weight:400;color:#8a7c5e;margin-top:1mm;}
+  .pgrow{flex:1 1 auto;min-height:0;display:flex;}
+  table.ptab{width:100%;height:100%;border-collapse:collapse;font-size:9.5pt;table-layout:fixed;box-shadow:none;border-radius:0;}
+  .ptab th{background:#efe6d2;border:0.6pt solid #cdbd98;padding:1.2mm 1.5mm;font-size:7.5pt;text-transform:uppercase;letter-spacing:.4px;color:#5d5239;line-height:1.1;text-align:center;}
+  .ptab td{border:0.6pt solid #dcd0b6;padding:0 1.5mm;text-align:center;line-height:1.1;font-variant-numeric:tabular-nums;}
   .ptab td.pd{text-align:left;white-space:nowrap;}
-  .ptab td.pn{text-align:left;font-size:8px;}
+  .ptab td.pd b{display:inline-block;min-width:6mm;}
+  .ptab td.pd span{color:#7d7156;font-size:8.5pt;}
+  .ptab td.pn{text-align:left;font-size:8.5pt;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}
+  .ptab td.pn i{color:#5a8a3a;}
+  .ptab th.pd,.ptab th.pn{text-align:left;}
   .ptab td.pb{font-weight:700;}
+  .ptab td.mut{color:#c9bfa6;}
   .ptab tr.psat td{background:#fbf1de;}
   .ptab tr.psun td{background:#fae7e7;}
-  .ptab tr.phol td{background:#e9f2e2;}
-  .ptab tfoot td{background:#f7f0e2;font-weight:700;border-top:1.5px solid #d8c9a8;}
-  /* súhrn ako vodorovný pás pod tabuľkou */
-  .psum{width:100%;border-collapse:collapse;font-size:9px;}
-  .psum td{border:1px solid #e3d8c2;padding:3px 6px;text-align:center;}
-  .psum td.k{color:#6e6248;font-size:7px;text-transform:uppercase;letter-spacing:.3px;}
-  .psum td.val{font-weight:700;font-size:11px;font-variant-numeric:tabular-nums;padding-top:1px;}
-  .psum td.acc{color:#b06a00;background:#fff4e6;}
-  .pfoot{margin-top:6px;font-size:8px;color:#9a8757;text-align:center;}
-  .psign{display:flex;justify-content:space-between;gap:40px;margin-top:26px;}
+  .ptab tr.phol td{background:#e6f1dd;}
+  .ptab tfoot td{background:#efe6d2;font-weight:700;border-top:1.2pt solid #b9a678;font-size:10pt;padding:1.6mm 1.5mm;}
+  .psumT{font-size:7.5pt;letter-spacing:1.2px;text-transform:uppercase;color:#8a7c5e;margin:3.5mm 0 1.2mm;}
+  .psum{width:100%;border-collapse:collapse;table-layout:fixed;box-shadow:none;border-radius:0;}
+  .psum td{border:0.6pt solid #dcd0b6;padding:1.3mm 1mm;text-align:center;}
+  .psum td.k{color:#6e6248;font-size:7pt;text-transform:uppercase;letter-spacing:.3px;line-height:1.15;background:#faf6ec;}
+  .psum td.val{font-weight:700;font-size:11.5pt;font-variant-numeric:tabular-nums;}
+  .psum td.acc{color:#a35f00;background:#fff1dc;}
+  .plegend{display:flex;gap:6mm;font-size:7.5pt;color:#6e6248;margin-top:2mm;}
+  .plegend i{display:inline-block;width:3mm;height:3mm;border:0.5pt solid #cdbd98;margin-right:1.2mm;vertical-align:-0.4mm;}
+  .psign{display:flex;justify-content:space-between;gap:14mm;margin-top:11mm;}
   .sigBox{flex:1;text-align:center;}
-  .sigLine{border-top:1px solid #6e6248;margin-bottom:4px;height:24px;}
-  .sigLbl{font-size:9px;color:#6e6248;text-transform:uppercase;letter-spacing:.4px;}
-  /* column widths */
-  .ptab col.cD{width:13%;} .ptab col.cT{width:10%;} .ptab col.cP{width:8%;}
-  .ptab col.cW{width:10%;} .ptab col.cX{width:6.5%;} .ptab col.cN{width:auto;}
+  .sigLine{border-top:0.8pt solid #6e6248;margin-bottom:1.2mm;}
+  .sigLbl{font-size:7.5pt;color:#6e6248;text-transform:uppercase;letter-spacing:.5px;}
+  .pfoot{margin-top:3mm;font-size:7pt;color:#9a8757;display:flex;justify-content:space-between;}
+  .ptab col.cD{width:13%;} .ptab col.cT{width:11%;} .ptab col.cP{width:11%;}
+  .ptab col.cW{width:12%;} .ptab col.cX{width:7.5%;} .ptab col.cN{width:auto;}
+  /* súhrnná strana všetkých zamestnancov */
+  table.pall{width:100%;border-collapse:collapse;font-size:9.5pt;box-shadow:none;border-radius:0;}
+  .pall th{background:#efe6d2;border:0.6pt solid #cdbd98;padding:2mm 1.5mm;font-size:7.5pt;text-transform:uppercase;letter-spacing:.3px;color:#5d5239;text-align:center;}
+  .pall td{border:0.6pt solid #dcd0b6;padding:2.2mm 1.5mm;text-align:right;font-variant-numeric:tabular-nums;}
+  .pall td.pd,.pall th.pd{text-align:left;}
+  .pall td.pd{font-weight:700;}
+  .pall td.acc{color:#a35f00;font-weight:700;}
+  .pall tfoot td{background:#efe6d2;font-weight:700;border-top:1.2pt solid #b9a678;}
+  .pfill{flex:1 1 auto;}
 }
 </style>
 </head>
@@ -249,7 +277,7 @@ function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").repl
 /* ====== STAV ====== */
 const st={
   year:new Date().getFullYear(), month:new Date().getMonth(),
-  employees:[], codes:{}, adminPin:"",
+  employees:[], codes:{}, admins:{}, adminPin:"",
   role:null,            // null = neprihlásený, "emp", "admin"
   me:null,              // id prihláseného zamestnanca
   activeEmp:null,       // koho dochádzka je otvorená v tabuľke
@@ -257,7 +285,7 @@ const st={
   monthData:{}, bank:{},
   loading:true, saving:false, tab:"grid", err:"", newName:"",
   codeInput:"", loginErr:"", setupPin:false,
-  punch:null, punchMsg:"", punching:false,
+  punch:null, punchMsg:"", punching:false, autoArr:null,
   lastEdit:0, lastActive:Date.now(), printMode:false
 };
 function monthKey(){return st.year+"-"+String(st.month+1).padStart(2,"0");}
@@ -273,12 +301,13 @@ async function loadEmployees(){
 async function loadSettings(){
   const {data,error}=await sb.from("nastavenia").select("kluc,hodnota");
   if(error){st.err="Chyba pri načítaní nastavení.";return;}
-  const codes={};let pin="";
+  const codes={},admins={};let pin="";
   (data||[]).forEach(r=>{
     if(r.kluc==="adminPin")pin=r.hodnota||"";
     else if(r.kluc&&r.kluc.indexOf("kod:")===0&&r.hodnota)codes[r.kluc.slice(4)]=String(r.hodnota);
+    else if(r.kluc&&r.kluc.indexOf("admin:")===0&&r.hodnota==="1")admins[r.kluc.slice(6)]=true;
   });
-  st.adminPin=pin;st.codes=codes;
+  st.adminPin=pin;st.codes=codes;st.admins=admins;
 }
 async function fetchMonth(empId,mk){
   const {data}=await sb.from("dochadzka").select("data").eq("emp_id",empId).eq("mesiac",mk).maybeSingle();
@@ -340,6 +369,17 @@ async function saveCode(empId,raw){
   render();
 }
 
+/* ďalší správca = zamestnanec, ktorý po zadaní SVOJHO kódu vidí všetkých; určuje ho len hlavný správca (admin PIN) */
+function isMaster(){return st.role==="admin"&&!st.me;}
+async function setAdmin(empId,on){
+  if(!isMaster())return;
+  const r=on?await sb.from("nastavenia").upsert({kluc:"admin:"+empId,hodnota:"1"})
+            :await sb.from("nastavenia").delete().eq("kluc","admin:"+empId);
+  if(r.error)st.err="Zmenu správcu sa nepodarilo uložiť.";
+  else{if(on)st.admins[empId]=true;else delete st.admins[empId];st.err="";}
+  render();
+}
+
 /* ====== PRIHLÁSENIE ====== */
 async function submitCode(){
   const v=st.codeInput.replace(/\D/g,"");
@@ -352,22 +392,28 @@ async function submitCode(){
   }
   if(v.length<4){st.loginErr="Zadajte svoj kód.";render();return;}
   await Promise.all([loadEmployees(),loadSettings()]);
-  if(st.adminPin&&v===st.adminPin){await enterAdmin();return;}
+  const n=new Date();st.year=n.getFullYear();st.month=n.getMonth();
+  st.punchMsg="";st.autoArr=null;st.lastActive=Date.now();
+  if(st.adminPin&&v===st.adminPin){await enterAdmin(null);return;}
   const emp=st.employees.find(e=>st.codes[e.id]===v);
   if(!emp){st.loginErr="Nesprávny kód.";render();return;}
-  st.role="emp";st.me=emp.id;st.activeEmp=emp.id;st.tab="grid";st.loginErr="";st.err="";st.punchMsg="";
-  const n=new Date();st.year=n.getFullYear();st.month=n.getMonth();
-  st.lastActive=Date.now();
-  await loadMonth();await refreshPunch();
-  render();
+  if(st.admins[emp.id]){await enterAdmin(emp.id);}
+  else{
+    st.role="emp";st.me=emp.id;st.activeEmp=emp.id;st.tab="grid";st.loginErr="";st.err="";
+    await loadMonth();
+  }
+  // prihlásenie = príchod: ak dnes ešte príchod nemá, zapíše sa hneď
+  await refreshPunch();
+  if(st.punch&&st.punch.action==="arr")await doPunch(false,true);
+  else render();
 }
-async function enterAdmin(){
-  st.role="admin";st.me=null;st.activeEmp=null;st.adminView="summary";st.loginErr="";st.err="";
+async function enterAdmin(meId){
+  st.role="admin";st.me=meId;st.activeEmp=null;st.adminView="summary";st.loginErr="";st.err="";
   await ensureCodes();await loadBank();
   render();
 }
 function logout(){
-  st.role=null;st.me=null;st.activeEmp=null;st.monthData={};st.bank={};st.punch=null;st.punchMsg="";
+  st.role=null;st.me=null;st.activeEmp=null;st.monthData={};st.bank={};st.punch=null;st.punchMsg="";st.autoArr=null;
   st.codeInput="";st.loginErr="";st.err="";st.adminView="summary";st.tab="grid";
   render();
 }
@@ -375,11 +421,11 @@ function logout(){
 /* ====== PRÍCHOD / ODCHOD ====== */
 /* zistí, čo má zamestnanec práve zapísať */
 async function refreshPunch(){
-  if(st.role!=="emp"){st.punch=null;return;}
+  if(!st.role||!st.me){st.punch=null;return;}
   const now=new Date();const yd=new Date(now.getFullYear(),now.getMonth(),now.getDate()-1);
   const tk=mkOf(now),yk=mkOf(yd);
-  const tData=tk===monthKey()?st.monthData:await fetchMonth(st.me,tk);
-  const yData=yk===tk?tData:(yk===monthKey()?st.monthData:await fetchMonth(st.me,yk));
+  const tData=await myMonth(tk);
+  const yData=yk===tk?tData:await myMonth(yk);
   const t=tData[ddOf(now)]||{};const y=yData[ddOf(yd)]||{};
   let p;
   if(t.arr&&!t.dep)p={action:"dep",mk:tk,dd:ddOf(now),arr:t.arr};
@@ -389,8 +435,10 @@ async function refreshPunch(){
   else p={action:"done",mk:tk,dd:ddOf(now),arr:t.arr,dep:t.dep};
   st.punch=p;
 }
-async function doPunch(fix){
-  if(st.role!=="emp"||!st.punch||st.punching)return;
+/* moje dáta za mesiac: ak mám práve otvorenú vlastnú tabuľku toho mesiaca, použije sa tá istá kópia */
+async function myMonth(mk){return (st.activeEmp===st.me&&mk===monthKey())?st.monthData:await fetchMonth(st.me,mk);}
+async function doPunch(fix,auto){
+  if(!st.role||!st.me||!st.punch||st.punching)return;
   st.punching=true;render();
   try{
     await refreshPunch(); // čerstvý stav tesne pred zápisom
@@ -399,22 +447,41 @@ async function doPunch(fix){
     if(p.action==="arr"){mk=mkOf(up);dd=ddOf(up);field="arr";}
     else if(p.action==="dep"||(p.action==="done"&&fix)){mk=p.mk;dd=p.dd;field="dep";}
     else{st.punching=false;render();return;}
-    const data=mk===monthKey()?st.monthData:await fetchMonth(st.me,mk);
+    const data=await myMonth(mk);
     data[dd]={...(data[dd]||{}),[field]:time};
     const {error}=await sb.from("dochadzka").upsert({emp_id:st.me,mesiac:mk,data,updated_at:new Date().toISOString()});
     if(error){st.err="Zápis sa nepodaril, skúste znova.";}
     else{
       st.err="";st.lastEdit=Date.now();
       st.punchMsg=(field==="arr"?"Príchod":"Odchod")+" zaznamenaný: "+time;
+      st.autoArr=(auto&&field==="arr")?{mk,dd,time}:null;
+      if(st.role==="admin")await loadBank();
     }
     await refreshPunch();
   }catch(e){st.err="Zápis sa nepodaril, skúste znova.";}
   st.punching=false;render();
 }
+/* zrušenie automaticky zapísaného príchodu (napr. keď si niekto len pozerá dochádzku vo voľný deň) */
+async function undoArr(){
+  const a=st.autoArr;if(!a||!st.me||st.punching)return;
+  st.punching=true;render();
+  try{
+    const data=await myMonth(a.mk);const c={...(data[a.dd]||{})};
+    if(c.arr===a.time&&!c.dep){
+      delete c.arr;data[a.dd]=c;
+      const {error}=await sb.from("dochadzka").upsert({emp_id:st.me,mesiac:a.mk,data,updated_at:new Date().toISOString()});
+      if(error)st.err="Zrušenie sa nepodarilo.";else{st.err="";st.punchMsg="";st.lastEdit=Date.now();}
+    }
+    st.autoArr=null;
+    if(st.role==="admin")await loadBank();
+    await refreshPunch();
+  }catch(e){st.err="Zrušenie sa nepodarilo.";}
+  st.punching=false;render();
+}
 function punchCard(){
   const p=st.punch;if(!p)return"";
   const t=hmOf(nowUp());let h=`<div class="punch">`;
-  if(st.punchMsg)h+=`<div class="punchOk">✓ ${esc(st.punchMsg)}</div>`;
+  if(st.punchMsg)h+=`<div class="punchOk">✓ ${esc(st.punchMsg)}${st.autoArr?` <button class="undoBtn" ${st.punching?"disabled":""} onclick="undoArr()">Zrušiť</button>`:""}</div>`;
   if(p.action==="arr"){
     h+=`<button class="punchBtn arr" ${st.punching?"disabled":""} onclick="doPunch()"><span class="pbLbl">Príchod</span><span class="pbTime" id="punchTime">${t}</span></button>
         <div class="punchSub">Zapíše sa čas zaokrúhlený nahor na štvrťhodinu.</div>`;
@@ -441,9 +508,10 @@ async function removeEmployee(id){
   if(!confirm("Odstrániť zamestnanca „"+empName(id)+"“ a celú jeho dochádzku?"))return;
   await sb.from("dochadzka").delete().eq("emp_id",id);
   await sb.from("nastavenia").delete().eq("kluc","kod:"+id);
+  await sb.from("nastavenia").delete().eq("kluc","admin:"+id);
   await sb.from("zamestnanci").delete().eq("id",id);
   st.employees=st.employees.filter(e=>e.id!==id);
-  delete st.codes[id];delete st.bank[id];
+  delete st.codes[id];delete st.bank[id];delete st.admins[id];
   st.activeEmp=null;st.adminView="summary";st.monthData={};
   await loadBank(); render();
 }
@@ -455,7 +523,7 @@ function setCell(day,field,value){
   if(st.role==="admin")st.bank[st.activeEmp]=st.monthData;
   st.lastEdit=Date.now();
   patchRow(day); saveMonth();
-  if(st.role==="emp"&&(field==="arr"||field==="dep"))refreshPunch().then(()=>{const el=document.getElementById("punchBox");if(el)el.innerHTML=punchCard();});
+  if(st.me&&st.activeEmp===st.me&&(field==="arr"||field==="dep"))refreshPunch().then(()=>{const el=document.getElementById("punchBox");if(el)el.innerHTML=punchCard();});
 }
 function patchRow(day){
   const rs=rowsFor(st.monthData,st.year,st.month);const r=rs[day-1];const sm=summaryFor(rs,st.year,st.month);
@@ -509,6 +577,7 @@ function render(){
   const root=document.getElementById("root");
   // zapamätaj fokus, aby ho prekreslenie nezhodilo
   const ae=document.activeElement;const keepId=ae&&ae.id&&root.contains(ae)?ae.id:null;
+  root.classList.toggle("wide",st.role==="admin"&&st.adminView==="summary");
   root.innerHTML=st.loading?`<div class="loading">Načítavam…</div>`:(st.role?appHtml():loginHtml());
   let f=keepId?document.getElementById(keepId):null;
   if(!f&&!st.role&&!st.loading)f=document.getElementById("codeIn");
@@ -525,11 +594,11 @@ function loginHtml(){
       oninput="this.value=this.value.replace(/\\D/g,'');st.codeInput=this.value" onkeydown="if(event.key==='Enter')submitCode()">
     ${st.loginErr?`<div class="loginErr">${esc(st.loginErr)}</div>`:""}
     <button class="modalOk loginBtn" onclick="submitCode()">${setup?"Nastaviť PIN":"Prihlásiť"}</button>
-    <div class="loginHint">${setup?"PIN správcu otvára prehľad všetkých zamestnancov.":"Po prihlásení zapíšete príchod alebo odchod jedným ťuknutím."}</div>
+    <div class="loginHint">${setup?"PIN správcu otvára prehľad všetkých zamestnancov.":"Prihlásením sa zapíše váš príchod. Odchod zapíšete tlačidlom po prihlásení."}</div>
   </div></div>`;
 }
 function headerHtml(){
-  const who=st.role==="admin"?"Správca":empName(st.me);
+  const who=st.role==="admin"?(st.me?"Správca · "+empName(st.me):"Hlavný správca"):empName(st.me);
   return `<header>
     <div class="brandRow">
       <div class="brandMark">◴</div>
@@ -547,9 +616,9 @@ function headerHtml(){
 }
 function appHtml(){
   let html=headerHtml();
+  if(st.me&&(st.role==="emp"||st.adminView==="summary"))html+=`<div id="punchBox">${punchCard()}</div>`;
   if(st.role==="admin"&&st.adminView==="summary")return html+adminSummaryHtml();
-  if(st.role==="emp")html+=`<div id="punchBox">${punchCard()}</div>`;
-  else html+=`<div class="detailBar"><button class="tab" onclick="backToSummary()">‹ Sumár</button><div class="detailName">${esc(empName(st.activeEmp))}</div></div>`;
+  if(st.role==="admin")html+=`<div class="detailBar"><button class="tab" onclick="backToSummary()">‹ Sumár</button><div class="detailName">${esc(empName(st.activeEmp))}</div></div>`;
   html+=`<div class="tabs">
     <button class="tab ${st.tab==='grid'?'active':''}" onclick="st.tab='grid';render()">Dochádzka</button>
     <button class="tab ${st.tab==='summary'?'active':''}" onclick="st.tab='summary';render()">Súhrn</button>
@@ -620,17 +689,23 @@ function adminSummaryHtml(){
     </div>
   </div>`;
   if(!st.employees.length)return html+`<div class="loading">Pridajte prvého zamestnanca vyššie.</div>`;
+  html+="<!--INCNT-->";
   const T={tw:0,sat:0,sun:0,h:0,night:0,overtime:0,lunch:0,dinner:0};let fund=0;
-  let body="";
+  let body="",inCnt=0;const master=isMaster();
+  const yd=new Date(now.getFullYear(),now.getMonth(),now.getDate()-1);const ydd=mkOf(yd)===monthKey()?ddOf(yd):null;
   st.employees.forEach(e=>{
     const md=st.bank[e.id]||{};const rs=rowsFor(md,st.year,st.month);const sm=summaryFor(rs,st.year,st.month);
     Object.keys(T).forEach(k=>T[k]+=sm[k]);fund=sm.fund;
-    let today="";
-    if(isCur){const c=md[tdd]||{};
-      today=c.arr&&!c.dep?`<span class="badge in">v práci od ${c.arr}</span>`:(c.arr&&c.dep?`<span class="badge out">${c.arr}–${c.dep}</span>`:`<span class="badge none">—</span>`);}
-    body+=`<tr>
+    let today="",atWork=false;
+    if(isCur){const c=md[tdd]||{};const y=ydd?(md[ydd]||{}):{};
+      if(c.arr&&!c.dep){atWork=true;today=`<span class="badge in">● v práci od ${c.arr}</span>`;}
+      else if(!c.arr&&y.arr&&!y.dep&&(1440-toMin(y.arr)+now.getHours()*60+now.getMinutes())<=16*60){atWork=true;today=`<span class="badge in">● v práci od včera ${y.arr}</span>`;}
+      else today=c.arr&&c.dep?`<span class="badge out">${c.arr}–${c.dep}</span>`:`<span class="badge none">—</span>`;
+      if(atWork)inCnt++;}
+    body+=`<tr class="${atWork?"atWork":""}">
       <td class="nm"><button class="nameBtn" id="emp-${e.id}" onclick="openEmp('${e.id}')">${esc(e.name)} ›</button></td>
       <td><input class="codeInput" id="kod-${e.id}" type="text" inputmode="numeric" autocomplete="off" value="${esc(st.codes[e.id]||"")}" aria-label="Kód – ${esc(e.name)}" onfocus="this.select()" onchange="saveCode('${e.id}',this.value)"></td>
+      <td>${master?`<input type="checkbox" class="admChk" id="adm-${e.id}" aria-label="Správca – ${esc(e.name)}" ${st.admins[e.id]?"checked":""} onchange="setAdmin('${e.id}',this.checked)">`:(st.admins[e.id]?"✓":"")}</td>
       ${isCur?`<td>${today}</td>`:""}
       <td class="num">${sm.days}</td>
       <td class="num b">${h2(sm.tw)}</td>
@@ -640,17 +715,17 @@ function adminSummaryHtml(){
     </tr>`;
   });
   html+=`<div class="tableWrap"><table class="allTab"><thead><tr>
-    <th class="date">Zamestnanec</th><th>Kód</th>${isCur?"<th>Dnes</th>":""}<th>Dni</th><th>Odprac.</th><th>Nadčas</th>
+    <th class="date">Zamestnanec</th><th>Kód</th><th>Správca</th>${isCur?"<th>Dnes</th>":""}<th>Dni</th><th>Odprac.</th><th>Nadčas</th>
     <th>Sobota</th><th>Nedeľa</th><th>Sviatok</th><th>Noc</th><th>Obedy</th><th>Večere</th></tr></thead>
     <tbody>${body}</tbody>
-    <tfoot><tr><td class="lbl" colspan="${isCur?4:3}">Spolu</td>
+    <tfoot><tr><td class="lbl" colspan="${isCur?5:4}">Spolu</td>
       <td class="num">${h2(T.tw)}</td><td class="num">${h2(T.overtime)}</td><td class="num">${h2(T.sat)}</td><td class="num">${h2(T.sun)}</td>
       <td class="num">${h2(T.h)}</td><td class="num">${h2(T.night)}</td><td class="num">${T.lunch}</td><td class="num">${T.dinner}</td></tr></tfoot>
   </table></div>
-  <div class="sumNote2">Pracovný fond v mesiaci: <b>${fund} h</b>. Hodnoty sú v hodinách. Ťuknutím na meno otvoríte dochádzku zamestnanca; kód v tabuľke môžete prepísať.</div>
+  <div class="sumNote2">Pracovný fond v mesiaci: <b>${fund} h</b>. Hodnoty sú v hodinách. Ťuknutím na meno otvoríte dochádzku zamestnanca; kód v tabuľke môžete prepísať.${master?" Zaškrtnutím „Správca“ určíte, kto ďalší po zadaní svojho kódu uvidí všetkých.":""}</div>
   ${holNote()}
   <div class="footer">Prihlásený správca vidí všetkých. Zamestnanec po zadaní svojho kódu vidí iba seba.</div>`;
-  return html;
+  return html.replace("<!--INCNT-->",isCur?`<div class="inNow"><i></i>Práve v práci: <b>${inCnt}</b> z ${st.employees.length}</div>`:"");
 }
 
 /* ====== TLAČ PDF (aktuálny mesiac; bez parametra všetci – len správca) ====== */
@@ -669,62 +744,72 @@ async function printEmps(ids){
     (data||[]).forEach(r=>{bank[r.emp_id]=r.data||{};});
   }catch(e){alert("Nepodarilo sa načítať dáta na tlač.");st.printMode=false;return;}
 
+  const mon=MONTHS[st.month]+" "+st.year;
+  const stamp=(()=>{const n=new Date();return n.getDate()+". "+(n.getMonth()+1)+". "+n.getFullYear();})();
+  const per=[];
+  list.forEach(emp=>{const rs=rowsFor(bank[emp.id]||{},st.year,st.month);per.push({emp,rs,sm:summaryFor(rs,st.year,st.month)});});
+  const total=per.length+(per.length>1?1:0);let pno=0;
+  const foot=name=>`<div class="pfoot"><span>Hotel Demänová · Dochádzka ${mon}${name?" · "+esc(name):""}</span><span>Vytlačené ${stamp} · strana ${++pno} / ${total}</span></div>`;
   let pages="";
-  list.forEach(emp=>{
-    const md=bank[emp.id]||{};
-    const rs=rowsFor(md,st.year,st.month);
-    const sm=summaryFor(rs,st.year,st.month);
+  // pri tlači viacerých: prvá strana = súhrn všetkých
+  if(per.length>1){
+    const T={tw:0,overtime:0,sat:0,sun:0,h:0,night:0,lunch:0,dinner:0};let body="";
+    per.forEach(({emp,sm})=>{Object.keys(T).forEach(k=>T[k]+=sm[k]);
+      body+=`<tr><td class="pd">${esc(emp.name)}</td><td>${sm.days}</td><td><b>${h2(sm.tw)}</b></td><td class="${sm.overtime>0?"acc":""}">${h2(sm.overtime)}</td>
+        <td>${h2(sm.sat)}</td><td>${h2(sm.sun)}</td><td>${h2(sm.h)}</td><td>${h2(sm.night)}</td><td>${sm.lunch}</td><td>${sm.dinner}</td></tr>`;});
+    pages+=`<section class="page">
+      <div class="phead"><div><div class="pkick">Hotel Demänová · Dochádzka</div><div class="pname">Súhrn zamestnancov</div></div>
+        <div class="pmonth">${mon}<small>Pracovný fond ${per[0].sm.fund} h (${per[0].sm.wd} × 8)</small></div></div>
+      <table class="pall"><thead><tr><th class="pd">Zamestnanec</th><th>Dni</th><th>Odprac. h</th><th>Nadčas</th><th>Sobota</th><th>Nedeľa</th><th>Sviatok</th><th>Noc</th><th>Obedy</th><th>Večere</th></tr></thead>
+        <tbody>${body}</tbody>
+        <tfoot><tr><td class="pd">Spolu</td><td></td><td>${h2(T.tw)}</td><td>${h2(T.overtime)}</td><td>${h2(T.sat)}</td><td>${h2(T.sun)}</td><td>${h2(T.h)}</td><td>${h2(T.night)}</td><td>${T.lunch}</td><td>${T.dinner}</td></tr></tfoot>
+      </table>
+      <div class="pfill"></div>
+      ${foot("")}
+    </section>`;
+  }
+  per.forEach(({emp,rs,sm})=>{
     let body="";
     rs.forEach(r=>{
       const cls=r.hol?"phol":(r.isSun?"psun":(r.isSat?"psat":""));
+      const note=r.note?esc(r.note):(r.holName?`<i>${esc(r.holName.split(" – ")[0])}</i>`:"");
+      const e=v=>v?`<td>${v}</td>`:`<td class="mut">–</td>`;
       body+=`<tr class="${cls}">
-        <td class="pd">${r.day}. ${DOW[r.dow]}${r.hol?' ●':''}</td>
-        <td>${r.arr||"—"}</td><td>${r.dep||"—"}</td>
-        <td>${r.brk?r.brk.toFixed(1):"—"}</td>
-        <td class="pb">${r.worked?h2(r.worked):"—"}</td>
+        <td class="pd"><b>${r.day}.</b> <span>${DOW[r.dow]}</span></td>
+        ${e(r.arr)}${e(r.dep)}${e(r.brk?r.brk.toFixed(1):"")}
+        ${r.worked?`<td class="pb">${h2(r.worked)}</td>`:`<td class="mut">–</td>`}
         <td>${r.lunch?"✕":""}</td><td>${r.dinner?"✕":""}</td>
-        <td class="pn">${esc(r.note)}</td></tr>`;
+        <td class="pn">${note}</td></tr>`;
     });
     pages+=`<section class="page">
-      <div class="phead"><div class="pname">${esc(emp.name)}</div>
-        <div class="pmonth">${MONTHS[st.month]} ${st.year}</div></div>
-      <table class="ptab">
+      <div class="phead"><div><div class="pkick">Hotel Demänová · Dochádzka</div><div class="pname">${esc(emp.name)}</div></div>
+        <div class="pmonth">${mon}<small>Pracovný fond ${sm.fund} h (${sm.wd} × 8)</small></div></div>
+      <div class="pgrow"><table class="ptab">
         <colgroup><col class="cD"><col class="cT"><col class="cT"><col class="cP"><col class="cW"><col class="cX"><col class="cX"><col class="cN"></colgroup>
         <thead><tr>
-        <th class="pd">Dátum</th><th>Prích.</th><th>Odch.</th><th>Prest.</th><th>Odprac.</th><th>Obed</th><th>Več.</th><th class="pn">Poznámka</th>
+        <th class="pd">Dátum</th><th>Príchod</th><th>Odchod</th><th>Prestávka</th><th>Odprac.</th><th>Obed</th><th>Večera</th><th class="pn">Poznámka</th>
       </tr></thead><tbody>${body}</tbody>
       <tfoot><tr><td colspan="4" style="text-align:right">Spolu odpracované</td>
         <td class="pb">${h2(sm.tw)}</td><td>${sm.lunch}</td><td>${sm.dinner}</td><td></td></tr></tfoot>
-      </table>
+      </table></div>
+      <div class="psumT">Mesačný súhrn</div>
       <table class="psum"><tbody>
         <tr>
-          <td class="k">Prac. fond<br>(${sm.wd}×8)</td>
-          <td class="k">Odpracované</td>
-          <td class="k">Sobota</td>
-          <td class="k">Nedeľa</td>
-          <td class="k">Sviatok</td>
-          <td class="k">Noc 22–6</td>
-          <td class="k acc">Nadčas</td>
-          <td class="k">Obed/Več.</td>
-          <td class="k">Strava spolu</td>
+          <td class="k">Pracovný fond</td><td class="k">Odpracované</td><td class="k">Sobota</td><td class="k">Nedeľa</td>
+          <td class="k">Sviatok</td><td class="k">Noc 22–6</td><td class="k acc">Nadčas</td><td class="k">Obedy</td><td class="k">Večere</td>
         </tr>
         <tr>
-          <td class="val">${sm.fund} h</td>
-          <td class="val">${h2(sm.tw)} h</td>
-          <td class="val">${h2(sm.sat)} h</td>
-          <td class="val">${h2(sm.sun)} h</td>
-          <td class="val">${h2(sm.h)} h</td>
-          <td class="val">${h2(sm.night)} h</td>
-          <td class="val acc">${h2(sm.overtime)} h</td>
-          <td class="val">${sm.lunch} / ${sm.dinner}</td>
-          <td class="val">${sm.lunch+sm.dinner}</td>
+          <td class="val">${sm.fund} h</td><td class="val">${h2(sm.tw)} h</td><td class="val">${h2(sm.sat)} h</td><td class="val">${h2(sm.sun)} h</td>
+          <td class="val">${h2(sm.h)} h</td><td class="val">${h2(sm.night)} h</td><td class="val acc">${h2(sm.overtime)} h</td>
+          <td class="val">${sm.lunch}</td><td class="val">${sm.dinner}</td>
         </tr>
       </tbody></table>
+      <div class="plegend"><span><i style="background:#fbf1de"></i>Sobota</span><span><i style="background:#fae7e7"></i>Nedeľa</span><span><i style="background:#e6f1dd"></i>Sviatok</span></div>
       <div class="psign">
         <div class="sigBox"><div class="sigLine"></div><div class="sigLbl">Podpis zamestnanca</div></div>
         <div class="sigBox"><div class="sigLine"></div><div class="sigLbl">Schválil</div></div>
       </div>
-      <div class="pfoot">Hotel Demänová · Dochádzka ${MONTHS[st.month]} ${st.year} · ${esc(emp.name)}</div>
+      ${foot(emp.name)}
     </section>`;
   });
 
@@ -767,8 +852,8 @@ async function printEmps(ids){
     if(role==="admin"){await loadSettings();await loadBank();}
     if(emp){const d=await fetchMonth(emp,mk);if(st.activeEmp===emp&&monthKey()===mk&&Date.now()-st.lastEdit>=8000)st.monthData=d;}
     if(st.role!==role)return;
-    if(st.role==="emp"){
-      if(!st.employees.find(e=>e.id===st.me)){logout();return;}
+    if(st.me){
+      if(!st.employees.find(e=>e.id===st.me)||(st.role==="admin"&&!st.admins[st.me])){logout();return;}
       await refreshPunch();
     }
     if(Date.now()-st.lastEdit<8000)return;
