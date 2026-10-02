@@ -129,7 +129,10 @@ button:active{transform:scale(.97);}
 .admChk{width:20px;height:20px;accent-color:var(--gold);cursor:pointer;}
 .inNow{padding:0 16px 10px;font-size:14px;}
 .inNow i{display:inline-block;width:10px;height:10px;border-radius:50%;background:#4f7a3a;margin-right:7px;}
-.undoBtn{margin-left:10px;padding:4px 12px;border-radius:999px;border:1px solid #b9d3a8;background:#fff;color:#3c6a26;font-size:12px;cursor:pointer;font-family:inherit;}
+.askTime{font-family:'Playfair Display',serif;font-size:54px;font-weight:800;text-align:center;line-height:1.1;margin:6px 0 10px;font-variant-numeric:tabular-nums;}
+.askTime.arr{color:#4f7a3a;}
+.askTime.dep{color:#a05a2c;}
+.askHint{font-size:11px;opacity:.6;text-align:center;margin-top:12px;}
 input:focus-visible,button:focus-visible{outline:2px solid var(--gold);outline-offset:1px;}
 
 /* ====== TLAČ ====== */
@@ -249,8 +252,8 @@ function holidays(y){
 function toMin(t){if(!t)return null;const p=t.split(":");const h=+p[0],m=+p[1];if(isNaN(h)||isNaN(m))return null;return h*60+m;}
 function hm(min){return String(Math.floor(min/60)).padStart(2,"0")+":"+String(min%60).padStart(2,"0");}
 function round15(t){if(!t)return t;const m=toMin(t);if(m===null)return t;let r=Math.round(m/15)*15;if(r>=1440)r=1425;return hm(r);}
-/* aktuálny čas zaokrúhlený NAHOR na :00/:15/:30/:45 (vracia Date – môže preskočiť na ďalší deň) */
-function nowUp(){const n=new Date();const m=n.getHours()*60+n.getMinutes();const r=Math.ceil(m/15)*15;return new Date(n.getFullYear(),n.getMonth(),n.getDate(),0,r,0,0);}
+/* príchod sa zaokrúhľuje nahor, odchod nadol; "at" = okamih, ku ktorému sa zapisuje (predvolene teraz) */
+function roundAt(dir,at){const n=at||new Date();const m=n.getHours()*60+n.getMinutes();const r=(dir==="up"?Math.ceil(m/15):Math.floor(m/15))*15;return new Date(n.getFullYear(),n.getMonth(),n.getDate(),0,r,0,0);}
 function hmOf(d){return hm(d.getHours()*60+d.getMinutes());}
 function mkOf(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");}
 function ddOf(d){return String(d.getDate()).padStart(2,"0");}
@@ -285,7 +288,7 @@ const st={
   monthData:{}, bank:{},
   loading:true, saving:false, tab:"grid", err:"", newName:"",
   codeInput:"", loginErr:"", setupPin:false,
-  punch:null, punchMsg:"", punching:false, autoArr:null,
+  punch:null, punchMsg:"", punching:false, punchAsk:null,
   lastEdit:0, lastActive:Date.now(), printMode:false
 };
 function monthKey(){return st.year+"-"+String(st.month+1).padStart(2,"0");}
@@ -393,7 +396,7 @@ async function submitCode(){
   if(v.length<4){st.loginErr="Zadajte svoj kód.";render();return;}
   await Promise.all([loadEmployees(),loadSettings()]);
   const n=new Date();st.year=n.getFullYear();st.month=n.getMonth();
-  st.punchMsg="";st.autoArr=null;st.lastActive=Date.now();
+  st.punchMsg="";st.punchAsk=null;st.lastActive=Date.now();
   if(st.adminPin&&v===st.adminPin){await enterAdmin(null);return;}
   const emp=st.employees.find(e=>st.codes[e.id]===v);
   if(!emp){st.loginErr="Nesprávny kód.";render();return;}
@@ -402,10 +405,10 @@ async function submitCode(){
     st.role="emp";st.me=emp.id;st.activeEmp=emp.id;st.tab="grid";st.loginErr="";st.err="";
     await loadMonth();
   }
-  // prihlásenie = príchod: ak dnes ešte príchod nemá, zapíše sa hneď
+  // po prihlásení vyskočí okno „Zapísať príchod/odchod“ s časom otvorenia – nič sa nezapíše bez potvrdenia
   await refreshPunch();
-  if(st.punch&&st.punch.action==="arr")await doPunch(false,true);
-  else render();
+  st.punchAsk=(st.punch&&(st.punch.action==="arr"||st.punch.action==="dep"))?{at:new Date(),action:st.punch.action}:null;
+  render();
 }
 async function enterAdmin(meId){
   st.role="admin";st.me=meId;st.activeEmp=null;st.adminView="summary";st.loginErr="";st.err="";
@@ -413,7 +416,7 @@ async function enterAdmin(meId){
   render();
 }
 function logout(){
-  st.role=null;st.me=null;st.activeEmp=null;st.monthData={};st.bank={};st.punch=null;st.punchMsg="";st.autoArr=null;
+  st.role=null;st.me=null;st.activeEmp=null;st.monthData={};st.bank={};st.punch=null;st.punchMsg="";st.punchAsk=null;
   st.codeInput="";st.loginErr="";st.err="";st.adminView="summary";st.tab="grid";
   render();
 }
@@ -437,15 +440,21 @@ async function refreshPunch(){
 }
 /* moje dáta za mesiac: ak mám práve otvorenú vlastnú tabuľku toho mesiaca, použije sa tá istá kópia */
 async function myMonth(mk){return (st.activeEmp===st.me&&mk===monthKey())?st.monthData:await fetchMonth(st.me,mk);}
-async function doPunch(fix,auto){
+async function doPunch(fix,at){
   if(!st.role||!st.me||!st.punch||st.punching)return;
+  const asked=st.punchAsk;st.punchAsk=null;
   st.punching=true;render();
   try{
     await refreshPunch(); // čerstvý stav tesne pred zápisom
-    const p=st.punch;const up=nowUp();const time=hmOf(up);
-    let mk,dd,field;
-    if(p.action==="arr"){mk=mkOf(up);dd=ddOf(up);field="arr";}
-    else if(p.action==="dep"||(p.action==="done"&&fix)){mk=p.mk;dd=p.dd;field="dep";}
+    const p=st.punch;
+    if(asked&&at&&p.action!==asked.action){st.err="Stav sa medzitým zmenil, skontrolujte tlačidlo nižšie.";st.punching=false;render();return;}
+    let mk,dd,field,time;
+    if(p.action==="arr"){const up=roundAt("up",at);time=hmOf(up);mk=mkOf(up);dd=ddOf(up);field="arr";}
+    else if(p.action==="dep"||(p.action==="done"&&fix)){
+      time=hmOf(roundAt("down",at));mk=p.mk;dd=p.dd;field="dep";
+      // odchod zaokrúhlený nadol nesmie skončiť pred príchodom (inak by vyšla 24-hodinová zmena)
+      if(!p.overnight&&toMin(time)<=toMin(p.arr)){st.err="Odchod "+time+" nie je neskôr ako príchod "+p.arr+". Zapíšte ho o chvíľu alebo upravte čas ručne v tabuľke.";st.punching=false;render();return;}
+    }
     else{st.punching=false;render();return;}
     const data=await myMonth(mk);
     data[dd]={...(data[dd]||{}),[field]:time};
@@ -454,43 +463,42 @@ async function doPunch(fix,auto){
     else{
       st.err="";st.lastEdit=Date.now();
       st.punchMsg=(field==="arr"?"Príchod":"Odchod")+" zaznamenaný: "+time;
-      st.autoArr=(auto&&field==="arr")?{mk,dd,time}:null;
       if(st.role==="admin")await loadBank();
     }
     await refreshPunch();
   }catch(e){st.err="Zápis sa nepodaril, skúste znova.";}
   st.punching=false;render();
 }
-/* zrušenie automaticky zapísaného príchodu (napr. keď si niekto len pozerá dochádzku vo voľný deň) */
-async function undoArr(){
-  const a=st.autoArr;if(!a||!st.me||st.punching)return;
-  st.punching=true;render();
-  try{
-    const data=await myMonth(a.mk);const c={...(data[a.dd]||{})};
-    if(c.arr===a.time&&!c.dep){
-      delete c.arr;data[a.dd]=c;
-      const {error}=await sb.from("dochadzka").upsert({emp_id:st.me,mesiac:a.mk,data,updated_at:new Date().toISOString()});
-      if(error)st.err="Zrušenie sa nepodarilo.";else{st.err="";st.punchMsg="";st.lastEdit=Date.now();}
-    }
-    st.autoArr=null;
-    if(st.role==="admin")await loadBank();
-    await refreshPunch();
-  }catch(e){st.err="Zrušenie sa nepodarilo.";}
-  st.punching=false;render();
+/* okno po prihlásení */
+function punchModal(){
+  const a=st.punchAsk;if(!a||!st.punch||st.punch.action!==a.action)return"";
+  const arr=a.action==="arr";const t=hmOf(roundAt(arr?"up":"down",a.at));const real=hmOf(a.at);
+  return `<div class="modalBack" onclick="closeAsk()">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="askT" onclick="event.stopPropagation()">
+      <div class="modalTitle" id="askT">${arr?"Zapísať príchod?":"Zapísať odchod?"}</div>
+      <div class="askTime ${arr?"arr":"dep"}">${t}</div>
+      <div class="modalSub">Otvorené o ${real}${real!==t?` – ${arr?"príchod sa zaokrúhľuje nahor":"odchod sa zaokrúhľuje nadol"} na štvrťhodinu`:""}.${arr?"":` Príchod ${st.punch.overnight?"včera ":""}o ${st.punch.arr}.`}</div>
+      <div class="modalRow">
+        <button class="modalCancel" onclick="closeAsk()">Nezapísať</button>
+        <button class="modalOk" id="punchYes" onclick="doPunch(false,st.punchAsk.at)">${arr?"Zapísať príchod":"Zapísať odchod"}</button>
+      </div>
+      <div class="askHint">Čas môžete kedykoľvek upraviť aj ručne v tabuľke.</div>
+    </div></div>`;
 }
+function closeAsk(){st.punchAsk=null;render();}
 function punchCard(){
   const p=st.punch;if(!p)return"";
-  const t=hmOf(nowUp());let h=`<div class="punch">`;
-  if(st.punchMsg)h+=`<div class="punchOk">✓ ${esc(st.punchMsg)}${st.autoArr?` <button class="undoBtn" ${st.punching?"disabled":""} onclick="undoArr()">Zrušiť</button>`:""}</div>`;
+  const dis=st.punching?"disabled":"";let h=`<div class="punch">`;
+  if(st.punchMsg)h+=`<div class="punchOk">✓ ${esc(st.punchMsg)}</div>`;
   if(p.action==="arr"){
-    h+=`<button class="punchBtn arr" ${st.punching?"disabled":""} onclick="doPunch()"><span class="pbLbl">Príchod</span><span class="pbTime" id="punchTime">${t}</span></button>
-        <div class="punchSub">Zapíše sa čas zaokrúhlený nahor na štvrťhodinu.</div>`;
+    h+=`<button class="punchBtn arr" ${dis} onclick="doPunch()"><span class="pbLbl">Príchod</span><span class="pbTime" id="punchTime" data-dir="up">${hmOf(roundAt("up"))}</span></button>
+        <div class="punchSub">Príchod sa zaokrúhľuje nahor na štvrťhodinu.</div>`;
   }else if(p.action==="dep"){
-    h+=`<button class="punchBtn dep" ${st.punching?"disabled":""} onclick="doPunch()"><span class="pbLbl">Odchod</span><span class="pbTime" id="punchTime">${t}</span></button>
-        <div class="punchSub">Príchod ${p.overnight?"včera ":""}o ${p.arr}. Zapíše sa čas zaokrúhlený nahor na štvrťhodinu.</div>`;
+    h+=`<button class="punchBtn dep" ${dis} onclick="doPunch()"><span class="pbLbl">Odchod</span><span class="pbTime" id="punchTime" data-dir="down">${hmOf(roundAt("down"))}</span></button>
+        <div class="punchSub">Príchod ${p.overnight?"včera ":""}o ${p.arr}. Odchod sa zaokrúhľuje nadol na štvrťhodinu.</div>`;
   }else{
     h+=`<div class="punchDone">Dnes: príchod <b>${p.arr}</b> · odchod <b>${p.dep}</b></div>
-        <button class="punchFix" ${st.punching?"disabled":""} onclick="doPunch(true)">Opraviť odchod na <span id="punchTime">${t}</span></button>`;
+        <button class="punchFix" ${dis} onclick="doPunch(true)">Opraviť odchod na <span id="punchTime" data-dir="down">${hmOf(roundAt("down"))}</span></button>`;
   }
   return h+`</div>`;
 }
@@ -578,7 +586,8 @@ function render(){
   // zapamätaj fokus, aby ho prekreslenie nezhodilo
   const ae=document.activeElement;const keepId=ae&&ae.id&&root.contains(ae)?ae.id:null;
   root.classList.toggle("wide",st.role==="admin"&&st.adminView==="summary");
-  root.innerHTML=st.loading?`<div class="loading">Načítavam…</div>`:(st.role?appHtml():loginHtml());
+  root.innerHTML=st.loading?`<div class="loading">Načítavam…</div>`:(st.role?appHtml()+punchModal():loginHtml());
+  // potvrdzovacie tlačidlo okna zámerne nedostáva fokus – Enter z prihlásenia by ho inak hneď potvrdil
   let f=keepId?document.getElementById(keepId):null;
   if(!f&&!st.role&&!st.loading)f=document.getElementById("codeIn");
   if(f&&f!==document.activeElement)f.focus();
@@ -594,7 +603,7 @@ function loginHtml(){
       oninput="this.value=this.value.replace(/\\D/g,'');st.codeInput=this.value" onkeydown="if(event.key==='Enter')submitCode()">
     ${st.loginErr?`<div class="loginErr">${esc(st.loginErr)}</div>`:""}
     <button class="modalOk loginBtn" onclick="submitCode()">${setup?"Nastaviť PIN":"Prihlásiť"}</button>
-    <div class="loginHint">${setup?"PIN správcu otvára prehľad všetkých zamestnancov.":"Prihlásením sa zapíše váš príchod. Odchod zapíšete tlačidlom po prihlásení."}</div>
+    <div class="loginHint">${setup?"PIN správcu otvára prehľad všetkých zamestnancov.":"Po prihlásení potvrdíte zápis príchodu alebo odchodu."}</div>
   </div></div>`;
 }
 function headerHtml(){
@@ -830,6 +839,7 @@ async function printEmps(ids){
 
 /* ====== ŠTART ====== */
 ["pointerdown","keydown","touchstart"].forEach(ev=>document.addEventListener(ev,()=>{st.lastActive=Date.now();},{passive:true}));
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&st.punchAsk)closeAsk();});
 (async function(){
   try{
     await Promise.all([loadEmployees(),loadSettings()]);
@@ -839,7 +849,7 @@ async function printEmps(ids){
   // čas na tlačidle príchod/odchod + automatické odhlásenie zamestnanca
   setInterval(()=>{
     if(st.role==="emp"&&!st.printMode&&Date.now()-st.lastActive>IDLE_LOGOUT_MS){logout();return;}
-    const el=document.getElementById("punchTime");if(el)el.textContent=hmOf(nowUp());
+    const el=document.getElementById("punchTime");if(el)el.textContent=hmOf(roundAt(el.dataset.dir));
   },5000);
   // periodické obnovenie
   setInterval(async()=>{
