@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Dochádzka">
+<meta name="theme-color" content="#fbf5ea">
+<title>Dochádzka — Hotel Demänová</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Inria+Serif:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{--gold:#b08d4f;--ink:#2c261c;--line:#e3d8c2;--cream:#fbf7ef;}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{margin:0;}
+body{background:var(--cream);color:var(--ink);font-family:'Inria Serif',Georgia,serif;padding-bottom:50px;}
+.wrap{max-width:760px;margin:0 auto;min-height:100vh;}
+.wrap.wide{max-width:1120px;}
+header{position:sticky;top:0;z-index:20;background:linear-gradient(180deg,#fffdf8,#fbf5ea);
+  border-bottom:1px solid var(--line);padding:14px 16px 12px;box-shadow:0 6px 18px -12px rgba(80,60,20,.4);}
+.brandRow{display:flex;align-items:center;gap:10px;}
+.brandMark{width:34px;height:34px;border-radius:9px;background:var(--gold);color:#fff;display:grid;place-items:center;font-size:20px;font-weight:700;}
+.brandTitle{font-family:'Playfair Display',serif;font-size:21px;font-weight:800;line-height:1;}
+.brandSub{font-size:11px;opacity:.6;margin-top:2px;letter-spacing:.5px;text-transform:uppercase;}
+.status{margin-left:auto;font-size:11px;opacity:.7;}
+.monthNav{display:flex;align-items:center;justify-content:center;gap:14px;margin-top:12px;}
+.navBtn{width:38px;height:38px;border-radius:10px;border:1px solid var(--line);background:#fff;font-size:22px;color:var(--gold);cursor:pointer;line-height:1;}
+.monthLabel{font-family:'Playfair Display',serif;font-size:18px;font-weight:700;min-width:160px;text-align:center;}
+.err{background:#fde8e8;color:#9b2c2c;padding:8px 16px;font-size:13px;text-align:center;}
+.empBar{display:flex;flex-wrap:wrap;gap:8px;padding:12px 16px;align-items:center;}
+.chip{padding:8px 14px;border-radius:999px;border:1px solid var(--line);background:#fff;font-size:14px;cursor:pointer;font-family:inherit;color:var(--ink);}
+.chip.active{background:var(--gold);color:#fff;border-color:var(--gold);font-weight:700;}
+.manageBtn{margin-left:auto;padding:8px 14px;border-radius:999px;border:1px solid var(--line);background:#fff;color:var(--ink);font-size:13px;cursor:pointer;font-family:inherit;}
+.addWrap{display:flex;gap:6px;margin-left:auto;align-items:center;}
+.addInput{padding:8px 12px;border-radius:999px;border:1px solid var(--line);font-size:14px;font-family:inherit;width:130px;background:#fff;color:var(--ink);}
+.addBtn{padding:8px 14px;border-radius:999px;border:none;background:var(--ink);color:#fff;font-size:13px;cursor:pointer;font-family:inherit;}
+.lockBtn{padding:8px 10px;border-radius:999px;border:1px solid var(--line);background:#fff;font-size:14px;cursor:pointer;}
+.tabs{display:flex;gap:8px;padding:4px 16px 12px;align-items:center;}
+.tab{padding:8px 18px;border-radius:10px;border:1px solid var(--line);background:#fff;font-size:14px;cursor:pointer;font-family:inherit;color:var(--ink);}
+.tab.active{background:var(--ink);color:#fff;border-color:var(--ink);font-weight:700;}
+.delEmp{margin-left:auto;padding:8px 12px;border-radius:10px;border:1px solid #e7c9c9;background:#fff;color:#a14848;font-size:12px;cursor:pointer;font-family:inherit;}
+.tableWrap{padding:0 8px;overflow-x:auto;}
+table{width:100%;border-collapse:collapse;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 10px 30px -20px rgba(80,60,20,.5);font-size:14px;}
+th{padding:10px 6px;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:#8a7c5e;background:#f7f0e2;border-bottom:1px solid var(--line);font-weight:700;text-align:center;}
+th.date{text-align:left;padding-left:12px;}
+th.narrow{padding:10px 2px;font-size:10px;width:42px;}
+td{padding:4px 6px;border-bottom:1px solid #f0e8d6;text-align:center;}
+td.date{padding:6px 6px 6px 12px;text-align:left;white-space:nowrap;}
+td.num{font-variant-numeric:tabular-nums;}
+.dnum{font-weight:700;margin-right:5px;}
+.dow{font-size:12px;opacity:.65;}
+.holTag{color:#5a8a3a;margin-left:5px;font-size:10px;}
+input[type=time]{border:1px solid var(--line);border-radius:7px;padding:5px 4px;font-size:14px;font-family:inherit;background:#fffdf8;color:var(--ink);width:92%;appearance:none;-webkit-appearance:none;}
+.timeText{border:1px solid var(--line);border-radius:7px;padding:6px 4px;font-size:15px;font-family:inherit;background:#fffdf8;color:var(--ink);width:74px;max-width:90%;text-align:center;font-variant-numeric:tabular-nums;}
+.noteInput{border:1px solid var(--line);border-radius:7px;padding:5px 8px;font-size:13px;font-family:inherit;background:#fffdf8;color:var(--ink);width:100%;min-width:110px;}
+td.note{text-align:left;min-width:120px;}
+.xbtn{width:30px;height:30px;border-radius:8px;border:1px solid var(--line);background:#fff;cursor:pointer;font-size:14px;color:var(--gold);font-weight:700;line-height:1;}
+.xbtn.on{background:var(--gold);color:#fff;border-color:var(--gold);}
+tr.sat td{background:#fdf3e1;}
+tr.sun td{background:#fbeaea;}
+tr.hol td{background:#eaf3e3;}
+tfoot td{padding:11px 12px;background:#faf4e8;border-top:2px solid var(--line);font-weight:700;}
+tfoot td.lbl{text-align:right;font-size:13px;}
+.legend{display:flex;gap:18px;justify-content:center;padding:14px 0 4px;font-size:12px;opacity:.8;}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:5px;vertical-align:middle;}
+.sumWrap{padding:4px 16px;}
+.sumTable{width:100%;border-collapse:collapse;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 10px 30px -20px rgba(80,60,20,.5);}
+.sumTable td{padding:13px 16px;border-bottom:1px solid #f0e8d6;text-align:left;}
+.sumTable td.v{text-align:right;font-variant-numeric:tabular-nums;font-weight:600;}
+.sumTable tr.strong td{font-weight:700;}
+.sumTable tr.accent{background:#fff4e6;}
+.sumTable tr.accent td.v{color:#b06a00;font-weight:800;font-size:17px;}
+.sub{font-size:11px;font-weight:400;opacity:.6;margin-top:2px;}
+.sumNote{text-align:center;margin-top:16px;font-size:15px;}
+.sumNote2{text-align:center;margin-top:10px;font-size:12px;opacity:.6;line-height:1.5;max-width:480px;margin-left:auto;margin-right:auto;}
+.loading{text-align:center;padding:60px;opacity:.6;}
+.footer{text-align:center;font-size:11px;opacity:.5;padding:24px 16px 0;}
+.modalBack{position:fixed;inset:0;background:rgba(40,30,12,.45);display:grid;place-items:center;z-index:50;padding:20px;}
+.modal{background:#fffdf8;border-radius:16px;padding:24px 22px;width:100%;max-width:320px;box-shadow:0 30px 70px -20px rgba(0,0,0,.5);border:1px solid var(--line);}
+.modalTitle{font-family:'Playfair Display',serif;font-size:19px;font-weight:800;margin-bottom:6px;}
+.modalSub{font-size:13px;opacity:.7;margin-bottom:16px;line-height:1.4;}
+.pinInput{width:100%;padding:12px 14px;border-radius:10px;border:1px solid var(--line);font-size:22px;letter-spacing:6px;text-align:center;font-family:inherit;background:#fff;color:var(--ink);}
+.modalRow{display:flex;gap:10px;margin-top:18px;}
+.modalCancel{flex:1;padding:11px;border-radius:10px;border:1px solid var(--line);background:#fff;font-size:14px;cursor:pointer;font-family:inherit;color:var(--ink);}
+.modalOk{flex:1;padding:11px;border-radius:10px;border:none;background:var(--gold);color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;}
+button:active{transform:scale(.97);}
+
+/* ====== PRIHLÁSENIE, PRÍCHOD/ODCHOD, SUMÁR ====== */
+.login{min-height:100vh;display:grid;place-items:center;padding:20px;}
+.loginCard{background:#fffdf8;border:1px solid var(--line);border-radius:18px;padding:30px 24px;width:100%;max-width:340px;text-align:center;box-shadow:0 30px 70px -30px rgba(80,60,20,.55);}
+.brandMark.big{width:54px;height:54px;font-size:30px;border-radius:14px;margin:0 auto 12px;}
+.loginTitle{font-family:'Playfair Display',serif;font-size:27px;font-weight:800;}
+.loginLbl{margin:22px 0 10px;font-size:14px;}
+.loginBtn{width:100%;margin-top:14px;padding:13px;font-size:16px;flex:none;}
+.loginErr{color:#9b2c2c;font-size:13px;margin-top:10px;}
+.loginHint{font-size:12px;opacity:.6;margin-top:14px;line-height:1.4;}
+.logoutBtn{margin-left:10px;padding:7px 12px;border-radius:999px;border:1px solid var(--line);background:#fff;color:var(--ink);font-size:12px;cursor:pointer;font-family:inherit;}
+.punch{padding:14px 16px 4px;text-align:center;}
+.punchBtn{width:100%;border:none;border-radius:16px;padding:18px 16px;color:#fff;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:16px;box-shadow:0 14px 30px -18px rgba(40,30,12,.8);}
+.punchBtn.arr{background:#4f7a3a;}
+.punchBtn.dep{background:#a05a2c;}
+.punchBtn:disabled,.punchFix:disabled{opacity:.55;}
+.pbLbl{font-family:'Playfair Display',serif;font-size:26px;font-weight:800;}
+.pbTime{font-size:26px;font-weight:700;font-variant-numeric:tabular-nums;background:rgba(255,255,255,.2);border-radius:10px;padding:2px 12px;}
+.punchSub{font-size:12px;opacity:.65;margin-top:8px;}
+.punchOk{background:#eaf3e3;color:#3c6a26;border-radius:10px;padding:9px 12px;font-size:15px;font-weight:700;margin-bottom:10px;}
+.punchDone{font-size:16px;padding:6px 0 10px;}
+.punchFix{padding:9px 16px;border-radius:999px;border:1px solid var(--line);background:#fff;color:var(--ink);font-size:13px;cursor:pointer;font-family:inherit;}
+.sumTitle{font-family:'Playfair Display',serif;font-size:18px;font-weight:800;}
+.detailBar{display:flex;align-items:center;gap:12px;padding:12px 16px 0;}
+.detailName{font-family:'Playfair Display',serif;font-size:19px;font-weight:800;}
+.allTab{font-size:13px;}
+.allTab td{padding:7px 8px;white-space:nowrap;}
+.allTab td.nm{text-align:left;padding-left:8px;position:sticky;left:0;background:#fff;}
+.allTab th.date{position:sticky;left:0;}
+.allTab td.b{font-weight:700;}
+.allTab td.ot{color:#b06a00;font-weight:700;}
+.allTab tbody tr:hover td{background:#fdf8ec;}
+.allTab tfoot td{padding:10px 8px;}
+.nameBtn{border:none;background:none;font-family:inherit;font-size:14px;font-weight:700;color:var(--ink);cursor:pointer;padding:6px 4px;text-align:left;}
+.codeInput{width:64px;border:1px solid var(--line);border-radius:7px;padding:5px 4px;font-size:14px;font-family:inherit;background:#fffdf8;color:var(--ink);text-align:center;font-variant-numeric:tabular-nums;letter-spacing:1px;}
+.badge{display:inline-block;border-radius:999px;padding:3px 9px;font-size:11px;}
+.badge.in{background:#eaf3e3;color:#3c6a26;font-weight:700;}
+.badge.out{background:#f3ecdc;color:#6e6248;}
+.badge.none{opacity:.4;}
+.allTab tr.atWork td,.allTab tr.atWork td.nm,.allTab tbody tr.atWork:hover td{background:#dcefd0;}
+.allTab tr.atWork td.nm{box-shadow:inset 4px 0 0 #4f7a3a;}
+.allTab tr.atWork .badge.in{background:#4f7a3a;color:#fff;}
+.admChk{width:20px;height:20px;accent-color:var(--gold);cursor:pointer;}
+.inNow{padding:0 16px 10px;font-size:14px;}
+.inNow i{display:inline-block;width:10px;height:10px;border-radius:50%;background:#4f7a3a;margin-right:7px;}
+.askTime{font-family:'Playfair Display',serif;font-size:54px;font-weight:800;text-align:center;line-height:1.1;margin:6px 0 10px;font-variant-numeric:tabular-nums;}
+.askTime.arr{color:#4f7a3a;}
+.askTime.dep{color:#a05a2c;}
+.askHint{font-size:11px;opacity:.6;text-align:center;margin-top:12px;}
+input:focus-visible,button:focus-visible{outline:2px solid var(--gold);outline-offset:1px;}
+
+/* ====== TLAČ ====== */
+#printArea{display:none;}
+@media screen{ body.printing > .wrap{display:none;} body.printing #printArea{display:block;} }
+@media print{
+  @page{ size:A4 portrait; margin:10mm 11mm 9mm; }
+  html,body{background:#fff;padding:0;}
+  body > .wrap{display:none !important;}
+  #printArea{display:block !important;}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  /* strana = presne tlačová plocha A4 (297 − 19 mm), obsah roztiahnutý na celú výšku */
+  .page{height:277mm;display:flex;flex-direction:column;page-break-after:always;break-after:page;page-break-inside:avoid;break-inside:avoid;overflow:hidden;}
+  .page:last-child{page-break-after:auto;break-after:auto;}
+  .phead{display:flex;align-items:flex-end;justify-content:space-between;border-bottom:2px solid var(--gold);padding-bottom:2.5mm;margin-bottom:3mm;}
+  .pkick{font-size:8.5pt;letter-spacing:1.4px;text-transform:uppercase;color:#8a7c5e;margin-bottom:1mm;}
+  .pname{font-family:'Playfair Display',Georgia,serif;font-size:19pt;font-weight:800;color:var(--ink);line-height:1.05;}
+  .pmonth{font-family:'Playfair Display',Georgia,serif;font-size:14pt;font-weight:700;color:var(--ink);text-align:right;line-height:1.1;}
+  .pmonth small{display:block;font-family:'Inria Serif',Georgia,serif;font-size:8.5pt;font-weight:400;color:#8a7c5e;margin-top:1mm;}
+  .pgrow{flex:1 1 auto;min-height:0;display:flex;}
+  table.ptab{width:100%;height:100%;border-collapse:collapse;font-size:9.5pt;table-layout:fixed;box-shadow:none;border-radius:0;}
+  .ptab th{background:#efe6d2;border:0.6pt solid #cdbd98;padding:1.2mm 1.5mm;font-size:7.5pt;text-transform:uppercase;letter-spacing:.4px;color:#5d5239;line-height:1.1;text-align:center;}
+  .ptab td{border:0.6pt solid #dcd0b6;padding:0 1.5mm;text-align:center;line-height:1.1;font-variant-numeric:tabular-nums;}
+  .ptab td.pd{text-align:left;white-space:nowrap;}
+  .ptab td.pd b{display:inline-block;min-width:6mm;}
+  .ptab td.pd span{color:#7d7156;font-size:8.5pt;}
+  .ptab td.pn{text-align:left;font-size:8.5pt;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}
+  .ptab td.pn i{color:#5a8a3a;}
+  .ptab th.pd,.ptab th.pn{text-align:left;}
+  .ptab td.pb{font-weight:700;}
+  .ptab td.mut{color:#c9bfa6;}
+  .ptab tr.psat td{background:#fbf1de;}
+  .ptab tr.psun td{background:#fae7e7;}
+  .ptab tr.phol td{background:#e6f1dd;}
+  .ptab tfoot td{background:#efe6d2;font-weight:700;border-top:1.2pt solid #b9a678;font-size:10pt;padding:1.6mm 1.5mm;}
+  .psumT{font-size:7.5pt;letter-spacing:1.2px;text-transform:uppercase;color:#8a7c5e;margin:3.5mm 0 1.2mm;}
+  .psum{width:100%;border-collapse:collapse;table-layout:fixed;box-shadow:none;border-radius:0;}
+  .psum td{border:0.6pt solid #dcd0b6;padding:1.3mm 1mm;text-align:center;}
+  .psum td.k{color:#6e6248;font-size:7pt;text-transform:uppercase;letter-spacing:.3px;line-height:1.15;background:#faf6ec;}
+  .psum td.val{font-weight:700;font-size:11.5pt;font-variant-numeric:tabular-nums;}
+  .psum td.acc{color:#a35f00;background:#fff1dc;}
+  .plegend{display:flex;gap:6mm;font-size:7.5pt;color:#6e6248;margin-top:2mm;}
+  .plegend i{display:inline-block;width:3mm;height:3mm;border:0.5pt solid #cdbd98;margin-right:1.2mm;vertical-align:-0.4mm;}
+  .psign{display:flex;justify-content:space-between;gap:14mm;margin-top:11mm;}
+  .sigBox{flex:1;text-align:center;}
+  .sigLine{border-top:0.8pt solid #6e6248;margin-bottom:1.2mm;}
+  .sigLbl{font-size:7.5pt;color:#6e6248;text-transform:uppercase;letter-spacing:.5px;}
+  .pfoot{margin-top:3mm;font-size:7pt;color:#9a8757;display:flex;justify-content:space-between;}
+  .ptab col.cD{width:13%;} .ptab col.cT{width:11%;} .ptab col.cP{width:11%;}
+  .ptab col.cW{width:12%;} .ptab col.cX{width:7.5%;} .ptab col.cN{width:auto;}
+  /* súhrnná strana všetkých zamestnancov */
+  table.pall{width:100%;border-collapse:collapse;font-size:9.5pt;box-shadow:none;border-radius:0;}
+  .pall th{background:#efe6d2;border:0.6pt solid #cdbd98;padding:2mm 1.5mm;font-size:7.5pt;text-transform:uppercase;letter-spacing:.3px;color:#5d5239;text-align:center;}
+  .pall td{border:0.6pt solid #dcd0b6;padding:2.2mm 1.5mm;text-align:right;font-variant-numeric:tabular-nums;}
+  .pall td.pd,.pall th.pd{text-align:left;}
+  .pall td.pd{font-weight:700;}
+  .pall td.acc{color:#a35f00;font-weight:700;}
+  .pall tfoot td{background:#efe6d2;font-weight:700;border-top:1.2pt solid #b9a678;}
+  .pfill{flex:1 1 auto;}
+}
+</style>
+</head>
+<body>
+<div class="wrap" id="root"><div class="loading">Načítavam…</div></div>
+
+<!-- Supabase client -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+/* ====== KONFIGURÁCIA SUPABASE ====== */
+const SUPABASE_URL = "https://otnvcdpnixewyelrjsrh.supabase.co";
+const SUPABASE_KEY = "sb_publishable_9Zx-VTA7rj5SLwjILKWA6Q_lTci5mrw";
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+/* ====== KONŠTANTY ====== */
+const MONTHS=["Január","Február","Marec","Apríl","Máj","Jún","Júl","August","September","Október","November","December"];
+const DOW=["Ne","Po","Ut","St","Št","Pi","So"];
+const IDLE_LOGOUT_MS=3*60*1000; // zamestnanca po 3 min nečinnosti odhlási
+
+/* ====== SVIATKY (SK) – zákon č. 241/1993 Z. z. v znení zák. 278/2024 a 261/2025 ======
+   off  = deň pracovného pokoja (nepočíta sa do pracovného fondu)
+   prem = sviatok s nárokom na príplatok za prácu vo sviatok (§ 122 ZP)
+   - 1. 9.  : od 2024 nie je dňom pracovného pokoja, bez príplatku
+   - 17. 11.: od 2025 nie je dňom pracovného pokoja, bez príplatku
+   - 8. 5. a 15. 9. v roku 2026: pracovný deň (počíta sa do fondu), ale príplatok za sviatok patrí
+   - 28. 10.: štátny sviatok, nikdy deň pracovného pokoja */
+function easter(y){const a=y%19,b=Math.floor(y/100),c=y%100,d=Math.floor(b/4),e=b%4,f=Math.floor((b+8)/25),g=Math.floor((b-f+1)/3),h=(19*a+b-d-g+15)%30,i=Math.floor(c/4),k=c%4,l=(32+2*e+2*i-h-k)%7,m=Math.floor((a+11*h+22*l)/451),mo=Math.floor((h+l-7*m+114)/31),da=((h+l-7*m+114)%31)+1;return new Date(y,mo-1,da);}
+function fmt(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
+const _holCache={};
+function holidays(y){
+  if(_holCache[y])return _holCache[y];
+  const map={};
+  const add=(m,d,name,off,prem)=>{map[fmt(new Date(y,m-1,d))]={name,off,prem};};
+  add(1,1,"Deň vzniku Slovenskej republiky",true,true);
+  add(1,6,"Zjavenie Pána (Traja králi)",true,true);
+  add(5,1,"Sviatok práce",true,true);
+  if(y===2026)add(5,8,"Deň víťazstva nad fašizmom – v r. 2026 pracovný deň, príplatok za sviatok patrí",false,true);
+  else add(5,8,"Deň víťazstva nad fašizmom",true,true);
+  add(7,5,"Sviatok svätého Cyrila a Metoda",true,true);
+  add(8,29,"Výročie SNP",true,true);
+  if(y<=2023)add(9,1,"Deň Ústavy SR",true,true);
+  if(y===2026)add(9,15,"Sedembolestná Panna Mária – v r. 2026 pracovný deň, príplatok za sviatok patrí",false,true);
+  else add(9,15,"Sedembolestná Panna Mária",true,true);
+  add(11,1,"Sviatok všetkých svätých",true,true);
+  if(y<=2024)add(11,17,"Deň boja za slobodu a demokraciu",true,true);
+  add(12,24,"Štedrý deň",true,true);
+  add(12,25,"Prvý sviatok vianočný",true,true);
+  add(12,26,"Druhý sviatok vianočný",true,true);
+  const es=easter(y);
+  const gf=new Date(es);gf.setDate(es.getDate()-2);
+  const em=new Date(es);em.setDate(es.getDate()+1);
+  map[fmt(gf)]={name:"Veľký piatok",off:true,prem:true};
+  map[fmt(em)]={name:"Veľkonočný pondelok",off:true,prem:true};
+  return _holCache[y]=map;
+}
+
+/* ====== ČAS ====== */
+function toMin(t){if(!t)return null;const p=t.split(":");const h=+p[0],m=+p[1];if(isNaN(h)||isNaN(m))return null;return h*60+m;}
+function hm(min){return String(Math.floor(min/60)).padStart(2,"0")+":"+String(min%60).padStart(2,"0");}
+function round15(t){if(!t)return t;const m=toMin(t);if(m===null)return t;let r=Math.round(m/15)*15;if(r>=1440)r=1425;return hm(r);}
+/* príchod sa zaokrúhľuje nahor, odchod nadol; "at" = okamih, ku ktorému sa zapisuje (predvolene teraz) */
+function roundAt(dir,at){const n=at||new Date();const m=n.getHours()*60+n.getMinutes();const r=(dir==="up"?Math.ceil(m/15):Math.floor(m/15))*15;return new Date(n.getFullYear(),n.getMonth(),n.getDate(),0,r,0,0);}
+function hmOf(d){return hm(d.getHours()*60+d.getMinutes());}
+function mkOf(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");}
+function ddOf(d){return String(d.getDate()).padStart(2,"0");}
+/* voľné vpisovanie: prijme "7", "7:30", "730", "7.30", "0730" a vráti HH:MM zaokrúhlené na 15 min */
+function parseTime(raw){
+  if(!raw)return"";
+  let s=String(raw).trim().replace(/[.,]/g,":").replace(/\s/g,"");
+  if(s==="")return"";
+  let h,m;
+  if(s.indexOf(":")>=0){const p=s.split(":");h=parseInt(p[0],10);m=parseInt(p[1]||"0",10);}
+  else{const d=s.replace(/\D/g,"");if(d.length<=2){h=parseInt(d,10);m=0;}else{h=parseInt(d.slice(0,d.length-2),10);m=parseInt(d.slice(-2),10);}}
+  if(isNaN(h))return"";
+  if(isNaN(m))m=0;
+  h=Math.max(0,Math.min(23,h)); m=Math.max(0,Math.min(59,m));
+  return round15(String(h).padStart(2,"0")+":"+String(m).padStart(2,"0"));
+}
+function breakFor(w){if(w>12.5)return 1;if(w>=5)return 0.5;return 0;}
+function shift(arr,dep){const a=toMin(arr),d0=toMin(dep);if(a===null||d0===null)return null;let d=d0;if(d<=a)d+=1440;const gm=d-a;if(gm<=0)return null;const gh=gm/60;const brk=breakFor(gh);let night=0;for(let mm=a;mm<d;mm++){const t=((mm%1440)+1440)%1440;if(t>=1320||t<360)night++;}return{brk,worked:gh-brk,night:night/60};}
+function dim(y,m){return new Date(y,m+1,0).getDate();}
+function r1(n){return Math.round(n*100)/100;}
+function h2(n){return r1(n).toFixed(2);}
+function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
+
+/* ====== STAV ====== */
+const st={
+  year:new Date().getFullYear(), month:new Date().getMonth(),
+  employees:[], codes:{}, admins:{}, adminPin:"",
+  role:null,            // null = neprihlásený, "emp", "admin"
+  me:null,              // id prihláseného zamestnanca
+  activeEmp:null,       // koho dochádzka je otvorená v tabuľke
+  adminView:"summary",  // admin: "summary" | "detail"
+  monthData:{}, bank:{},
+  loading:true, saving:false, tab:"grid", err:"", newName:"",
+  codeInput:"", loginErr:"", setupPin:false,
+  punch:null, punchMsg:"", punching:false, punchAsk:null,
+  lastEdit:0, lastActive:Date.now(), printMode:false
+};
+function monthKey(){return st.year+"-"+String(st.month+1).padStart(2,"0");}
+function empName(id){const e=st.employees.find(x=>x.id===id);return e?e.name:"";}
+
+/* ====== DB ====== */
+async function loadEmployees(){
+  const {data,error}=await sb.from("zamestnanci").select("*").order("poradie",{ascending:true});
+  if(error){st.err="Chyba pri načítaní zamestnancov.";return;}
+  st.employees=(data||[]).map(r=>({id:r.id,name:r.meno}));
+}
+/* admin PIN + osobné kódy sú v tabuľke nastavenia (kluc "adminPin" a "kod:<id zamestnanca>") */
+async function loadSettings(){
+  const {data,error}=await sb.from("nastavenia").select("kluc,hodnota");
+  if(error){st.err="Chyba pri načítaní nastavení.";return;}
+  const codes={},admins={};let pin="";
+  (data||[]).forEach(r=>{
+    if(r.kluc==="adminPin")pin=r.hodnota||"";
+    else if(r.kluc&&r.kluc.indexOf("kod:")===0&&r.hodnota)codes[r.kluc.slice(4)]=String(r.hodnota);
+    else if(r.kluc&&r.kluc.indexOf("admin:")===0&&r.hodnota==="1")admins[r.kluc.slice(6)]=true;
+  });
+  st.adminPin=pin;st.codes=codes;st.admins=admins;
+}
+async function fetchMonth(empId,mk){
+  const {data}=await sb.from("dochadzka").select("data").eq("emp_id",empId).eq("mesiac",mk).maybeSingle();
+  return data&&data.data?data.data:{};
+}
+async function loadMonth(){
+  if(!st.activeEmp){st.monthData={};return;}
+  st.monthData=await fetchMonth(st.activeEmp,monthKey());
+}
+async function loadBank(){
+  const {data,error}=await sb.from("dochadzka").select("emp_id,data").eq("mesiac",monthKey());
+  if(error){st.err="Chyba pri načítaní dochádzky.";return;}
+  const b={};(data||[]).forEach(r=>{b[r.emp_id]=r.data||{};});st.bank=b;
+}
+async function saveEmployees(){
+  const rows=st.employees.map((e,i)=>({id:e.id,meno:e.name,poradie:i}));
+  const {error}=await sb.from("zamestnanci").upsert(rows);
+  if(error)st.err="Nepodarilo sa uložiť zamestnancov.";
+}
+function setStatus(){const el=document.getElementById("status");if(el)el.textContent=st.saving?"Ukladám…":"Online";}
+function showErr(){const el=document.getElementById("errBox");if(el){el.textContent=st.err;el.style.display=st.err?"":"none";}}
+async function saveMonth(){
+  st.saving=true;setStatus();
+  const {error}=await sb.from("dochadzka").upsert({emp_id:st.activeEmp,mesiac:monthKey(),data:st.monthData,updated_at:new Date().toISOString()});
+  st.saving=false; st.err=error?"Nepodarilo sa uložiť dochádzku.":"";
+  setStatus();showErr();
+}
+async function savePin(p){
+  const {error}=await sb.from("nastavenia").upsert({kluc:"adminPin",hodnota:p});
+  if(error)st.err="PIN sa nepodarilo uložiť.";
+  return !error;
+}
+
+/* ====== OSOBNÉ KÓDY ====== */
+function genCode(){
+  const used=new Set(Object.values(st.codes));
+  for(let i=0;i<500;i++){
+    const a=new Uint32Array(1);crypto.getRandomValues(a);
+    const c=String(1000+(a[0]%9000));
+    if(!used.has(c)&&c!==st.adminPin)return c;
+  }
+  return String(Date.now()).slice(-6);
+}
+async function ensureCodes(){
+  const rows=[];
+  st.employees.forEach(e=>{if(!st.codes[e.id]){const c=genCode();st.codes[e.id]=c;rows.push({kluc:"kod:"+e.id,hodnota:c});}});
+  if(rows.length){const {error}=await sb.from("nastavenia").upsert(rows);if(error)st.err="Kódy sa nepodarilo uložiť.";}
+}
+async function saveCode(empId,raw){
+  if(st.role!=="admin")return;
+  const v=String(raw).replace(/\D/g,"");
+  let e="";
+  if(v.length<4||v.length>8)e="Kód musí mať 4 až 8 číslic.";
+  else if(v===st.adminPin)e="Tento kód je obsadený, zvoľte iný.";
+  else if(Object.keys(st.codes).some(id=>id!==empId&&st.codes[id]===v))e="Tento kód už má iný zamestnanec.";
+  if(e){st.err=e;render();return;}
+  const {error}=await sb.from("nastavenia").upsert({kluc:"kod:"+empId,hodnota:v});
+  if(error){st.err="Kód sa nepodarilo uložiť.";}else{st.codes[empId]=v;st.err="";}
+  render();
+}
+
+/* ďalší správca = zamestnanec, ktorý po zadaní SVOJHO kódu vidí všetkých; určuje ho len hlavný správca (admin PIN) */
+function isMaster(){return st.role==="admin"&&!st.me;}
+async function setAdmin(empId,on){
+  if(!isMaster())return;
+  const r=on?await sb.from("nastavenia").upsert({kluc:"admin:"+empId,hodnota:"1"})
+            :await sb.from("nastavenia").delete().eq("kluc","admin:"+empId);
+  if(r.error)st.err="Zmenu správcu sa nepodarilo uložiť.";
+  else{if(on)st.admins[empId]=true;else delete st.admins[empId];st.err="";}
+  render();
+}
+
+/* ====== PRIHLÁSENIE ====== */
+async function submitCode(){
+  const v=st.codeInput.replace(/\D/g,"");
+  st.codeInput="";
+  if(st.setupPin){
+    if(v.length<4){st.loginErr="PIN musí mať aspoň 4 číslice.";render();return;}
+    if(await savePin(v)){st.adminPin=v;st.setupPin=false;await enterAdmin();}
+    else{st.loginErr="PIN sa nepodarilo uložiť.";render();}
+    return;
+  }
+  if(v.length<4){st.loginErr="Zadajte svoj kód.";render();return;}
+  await Promise.all([loadEmployees(),loadSettings()]);
+  const n=new Date();st.year=n.getFullYear();st.month=n.getMonth();
+  st.punchMsg="";st.punchAsk=null;st.lastActive=Date.now();
+  if(st.adminPin&&v===st.adminPin){await enterAdmin(null);return;}
+  const emp=st.employees.find(e=>st.codes[e.id]===v);
+  if(!emp){st.loginErr="Nesprávny kód.";render();return;}
+  if(st.admins[emp.id]){await enterAdmin(emp.id);}
+  else{
+    st.role="emp";st.me=emp.id;st.activeEmp=emp.id;st.tab="grid";st.loginErr="";st.err="";
+    await loadMonth();
+  }
+  // po prihlásení vyskočí okno „Zapísať príchod/odchod“ s časom otvorenia – nič sa nezapíše bez potvrdenia
+  await refreshPunch();
+  st.punchAsk=(st.punch&&(st.punch.action==="arr"||st.punch.action==="dep"))?{at:new Date(),action:st.punch.action}:null;
+  render();
+}
+async function enterAdmin(meId){
+  st.role="admin";st.me=meId;st.activeEmp=null;st.adminView="summary";st.loginErr="";st.err="";
+  await ensureCodes();await loadBank();
+  render();
+}
+function logout(){
+  st.role=null;st.me=null;st.activeEmp=null;st.monthData={};st.bank={};st.punch=null;st.punchMsg="";st.punchAsk=null;
+  st.codeInput="";st.loginErr="";st.err="";st.adminView="summary";st.tab="grid";
+  render();
+}
+
+/* ====== PRÍCHOD / ODCHOD ====== */
+/* zistí, čo má zamestnanec práve zapísať */
+async function refreshPunch(){
+  if(!st.role||!st.me){st.punch=null;return;}
+  const now=new Date();const yd=new Date(now.getFullYear(),now.getMonth(),now.getDate()-1);
+  const tk=mkOf(now),yk=mkOf(yd);
+  const tData=await myMonth(tk);
+  const yData=yk===tk?tData:await myMonth(yk);
+  const t=tData[ddOf(now)]||{};const y=yData[ddOf(yd)]||{};
+  let p;
+  if(t.arr&&!t.dep)p={action:"dep",mk:tk,dd:ddOf(now),arr:t.arr};
+  else if(!t.arr&&y.arr&&!y.dep&&(1440-toMin(y.arr)+now.getHours()*60+now.getMinutes())<=16*60)
+    p={action:"dep",mk:yk,dd:ddOf(yd),arr:y.arr,overnight:true};
+  else if(!t.arr)p={action:"arr"};
+  else p={action:"done",mk:tk,dd:ddOf(now),arr:t.arr,dep:t.dep};
+  st.punch=p;
+}
+/* moje dáta za mesiac: ak mám práve otvorenú vlastnú tabuľku toho mesiaca, použije sa tá istá kópia */
+async function myMonth(mk){return (st.activeEmp===st.me&&mk===monthKey())?st.monthData:await fetchMonth(st.me,mk);}
+async function doPunch(fix,at){
+  if(!st.role||!st.me||!st.punch||st.punching)return;
+  const asked=st.punchAsk;st.punchAsk=null;
+  st.punching=true;render();
+  try{
+    await refreshPunch(); // čerstvý stav tesne pred zápisom
+    const p=st.punch;
+    if(asked&&at&&p.action!==asked.action){st.err="Stav sa medzitým zmenil, skontrolujte tlačidlo nižšie.";st.punching=false;render();return;}
+    let mk,dd,field,time;
+    if(p.action==="arr"){const up=roundAt("up",at);time=hmOf(up);mk=mkOf(up);dd=ddOf(up);field="arr";}
+    else if(p.action==="dep"||(p.action==="done"&&fix)){
+      time=hmOf(roundAt("down",at));mk=p.mk;dd=p.dd;field="dep";
+      // odchod zaokrúhlený nadol nesmie skončiť pred príchodom (inak by vyšla 24-hodinová zmena)
+      if(!p.overnight&&toMin(time)<=toMin(p.arr)){st.err="Odchod "+time+" nie je neskôr ako príchod "+p.arr+". Zapíšte ho o chvíľu alebo upravte čas ručne v tabuľke.";st.punching=false;render();return;}
+    }
+    else{st.punching=false;render();return;}
+    const data=await myMonth(mk);
+    data[dd]={...(data[dd]||{}),[field]:time};
+    const {error}=await sb.from("dochadzka").upsert({emp_id:st.me,mesiac:mk,data,updated_at:new Date().toISOString()});
+    if(error){st.err="Zápis sa nepodaril, skúste znova.";}
+    else{
+      st.err="";st.lastEdit=Date.now();
+      st.punchMsg=(field==="arr"?"Príchod":"Odchod")+" zaznamenaný: "+time;
+      if(st.role==="admin")await loadBank();
+    }
+    await refreshPunch();
+  }catch(e){st.err="Zápis sa nepodaril, skúste znova.";}
+  st.punching=false;render();
+}
+/* okno po prihlásení */
+function punchModal(){
+  const a=st.punchAsk;if(!a||!st.punch||st.punch.action!==a.action)return"";
+  const arr=a.action==="arr";const t=hmOf(roundAt(arr?"up":"down",a.at));const real=hmOf(a.at);
+  return `<div class="modalBack" onclick="closeAsk()">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="askT" onclick="event.stopPropagation()">
+      <div class="modalTitle" id="askT">${arr?"Zapísať príchod?":"Zapísať odchod?"}</div>
+      <div class="askTime ${arr?"arr":"dep"}">${t}</div>
+      <div class="modalSub">Otvorené o ${real}${real!==t?` – ${arr?"príchod sa zaokrúhľuje nahor":"odchod sa zaokrúhľuje nadol"} na štvrťhodinu`:""}.${arr?"":` Príchod ${st.punch.overnight?"včera ":""}o ${st.punch.arr}.`}</div>
+      <div class="modalRow">
+        <button class="modalCancel" onclick="closeAsk()">Nezapísať</button>
+        <button class="modalOk" id="punchYes" onclick="doPunch(false,st.punchAsk.at)">${arr?"Zapísať príchod":"Zapísať odchod"}</button>
+      </div>
+      <div class="askHint">Čas môžete kedykoľvek upraviť aj ručne v tabuľke.</div>
+    </div></div>`;
+}
+function closeAsk(){st.punchAsk=null;render();}
+function punchCard(){
+  const p=st.punch;if(!p)return"";
+  const dis=st.punching?"disabled":"";let h=`<div class="punch">`;
+  if(st.punchMsg)h+=`<div class="punchOk">✓ ${esc(st.punchMsg)}</div>`;
+  if(p.action==="arr"){
+    h+=`<button class="punchBtn arr" ${dis} onclick="doPunch()"><span class="pbLbl">Príchod</span><span class="pbTime" id="punchTime" data-dir="up">${hmOf(roundAt("up"))}</span></button>
+        <div class="punchSub">Príchod sa zaokrúhľuje nahor na štvrťhodinu.</div>`;
+  }else if(p.action==="dep"){
+    h+=`<button class="punchBtn dep" ${dis} onclick="doPunch()"><span class="pbLbl">Odchod</span><span class="pbTime" id="punchTime" data-dir="down">${hmOf(roundAt("down"))}</span></button>
+        <div class="punchSub">Príchod ${p.overnight?"včera ":""}o ${p.arr}. Odchod sa zaokrúhľuje nadol na štvrťhodinu.</div>`;
+  }else{
+    h+=`<div class="punchDone">Dnes: príchod <b>${p.arr}</b> · odchod <b>${p.dep}</b></div>
+        <button class="punchFix" ${dis} onclick="doPunch(true)">Opraviť odchod na <span id="punchTime" data-dir="down">${hmOf(roundAt("down"))}</span></button>`;
+  }
+  return h+`</div>`;
+}
+
+/* ====== AKCIE ====== */
+async function addEmployee(){
+  if(st.role!=="admin")return;
+  const n=st.newName.trim(); if(!n)return;
+  const id="e"+Date.now().toString(36);
+  st.employees.push({id,name:n}); st.newName="";
+  await saveEmployees(); await ensureCodes(); render();
+}
+async function removeEmployee(id){
+  if(st.role!=="admin")return;
+  if(!confirm("Odstrániť zamestnanca „"+empName(id)+"“ a celú jeho dochádzku?"))return;
+  await sb.from("dochadzka").delete().eq("emp_id",id);
+  await sb.from("nastavenia").delete().eq("kluc","kod:"+id);
+  await sb.from("nastavenia").delete().eq("kluc","admin:"+id);
+  await sb.from("zamestnanci").delete().eq("id",id);
+  st.employees=st.employees.filter(e=>e.id!==id);
+  delete st.codes[id];delete st.bank[id];delete st.admins[id];
+  st.activeEmp=null;st.adminView="summary";st.monthData={};
+  await loadBank(); render();
+}
+/* úprava bunky: tabuľka sa NEprekresľuje (aby fungoval tabulátor), prepíšu sa len vypočítané polia */
+function setCell(day,field,value){
+  if(!st.role||!st.activeEmp)return;
+  const dd=String(day).padStart(2,"0");
+  st.monthData[dd]={...(st.monthData[dd]||{}),[field]:value};
+  if(st.role==="admin")st.bank[st.activeEmp]=st.monthData;
+  st.lastEdit=Date.now();
+  patchRow(day); saveMonth();
+  if(st.me&&st.activeEmp===st.me&&(field==="arr"||field==="dep"))refreshPunch().then(()=>{const el=document.getElementById("punchBox");if(el)el.innerHTML=punchCard();});
+}
+function patchRow(day){
+  const rs=rowsFor(st.monthData,st.year,st.month);const r=rs[day-1];const sm=summaryFor(rs,st.year,st.month);
+  const $=id=>document.getElementById(id);
+  const set=(id,v)=>{const el=$(id);if(el&&el.value!==v)el.value=v;};
+  const txt=(id,v)=>{const el=$(id);if(el)el.textContent=v;};
+  set("arr-"+day,r.arr);set("dep-"+day,r.dep);set("note-"+day,r.note);
+  txt("brk-"+day,r.brk?r.brk.toFixed(1):"—");txt("wrk-"+day,r.worked?h2(r.worked):"—");
+  [["lunch","lu-"],["dinner","di-"]].forEach(([f,pre])=>{const b=$(pre+day);if(b){b.classList.toggle("on",r[f]);b.textContent=r[f]?"✕":"";b.setAttribute("aria-pressed",r[f]?"true":"false");}});
+  txt("ft-tw",h2(sm.tw));txt("ft-lu",sm.lunch);txt("ft-di",sm.dinner);
+}
+function toggleCell(day,field){const dd=String(day).padStart(2,"0");setCell(day,field,!((st.monthData[dd]||{})[field]));}
+/* Enter = o riadok nižšie v tom istom stĺpci */
+function cellKey(ev,pre,day){
+  if(ev.key!=="Enter")return;
+  ev.preventDefault();
+  const nx=document.getElementById(pre+(day+(ev.shiftKey?-1:1)));
+  if(nx){nx.focus();if(nx.select)nx.select();}else ev.target.blur();
+}
+async function changeMonth(d){
+  let m=st.month+d,y=st.year;if(m<0){m=11;y--;}if(m>11){m=0;y++;}st.month=m;st.year=y;
+  if(st.role==="admin")await loadBank();
+  if(st.activeEmp)await loadMonth();
+  render();
+}
+async function openEmp(id){st.activeEmp=id;st.adminView="detail";st.tab="grid";await loadMonth();render();window.scrollTo(0,0);}
+async function backToSummary(){st.activeEmp=null;st.adminView="summary";await loadBank();render();}
+
+/* ====== VÝPOČTY ====== */
+function rowsFor(monthData,year,month){
+  const hol=holidays(year);const n=dim(year,month);const out=[];
+  for(let day=1;day<=n;day++){
+    const dt=new Date(year,month,day);const dow=dt.getDay();const dd=String(day).padStart(2,"0");
+    const c=monthData[dd]||{};const s=shift(c.arr,c.dep);const hd=hol[fmt(dt)];
+    out.push({day,dd,dow,isSat:dow===6,isSun:dow===0,hol:!!(hd&&hd.prem),holName:hd?hd.name:"",
+      arr:c.arr||"",dep:c.dep||"",lunch:!!c.lunch,dinner:!!c.dinner,note:c.note||"",
+      brk:s?s.brk:0,worked:s?s.worked:0,night:s?s.night:0});
+  }
+  return out;
+}
+function summaryFor(rs,year,month){
+  const hol=holidays(year);const n=dim(year,month);let wd=0;
+  for(let day=1;day<=n;day++){const dt=new Date(year,month,day);const dow=dt.getDay();const hd=hol[fmt(dt)];if(dow!==0&&dow!==6&&!(hd&&hd.off))wd++;}
+  const fund=wd*8;let tw=0,sat=0,sun=0,h=0,night=0,lunch=0,dinner=0,days=0;
+  rs.forEach(r=>{tw+=r.worked;night+=r.night;if(r.worked)days++;if(r.hol)h+=r.worked;else if(r.isSat)sat+=r.worked;else if(r.isSun)sun+=r.worked;if(r.lunch)lunch++;if(r.dinner)dinner++;});
+  return{wd,fund,tw,sat,sun,h,night,overtime:Math.max(0,tw-fund),lunch,dinner,days};
+}
+
+/* ====== RENDER ====== */
+function render(){
+  const root=document.getElementById("root");
+  // zapamätaj fokus, aby ho prekreslenie nezhodilo
+  const ae=document.activeElement;const keepId=ae&&ae.id&&root.contains(ae)?ae.id:null;
+  root.classList.toggle("wide",st.role==="admin"&&st.adminView==="summary");
+  root.innerHTML=st.loading?`<div class="loading">Načítavam…</div>`:(st.role?appHtml()+punchModal():loginHtml());
+  // potvrdzovacie tlačidlo okna zámerne nedostáva fokus – Enter z prihlásenia by ho inak hneď potvrdil
+  let f=keepId?document.getElementById(keepId):null;
+  if(!f&&!st.role&&!st.loading)f=document.getElementById("codeIn");
+  if(f&&f!==document.activeElement)f.focus();
+}
+function loginHtml(){
+  const setup=st.setupPin;
+  return `<div class="login"><div class="loginCard">
+    <div class="brandMark big">◴</div>
+    <div class="loginTitle">Dochádzka</div>
+    <div class="brandSub">Hotel Demänová</div>
+    <div class="loginLbl">${setup?"Nastavte admin PIN (min. 4 číslice)":"Zadajte svoj osobný kód"}</div>
+    <input class="pinInput" id="codeIn" type="password" inputmode="numeric" autocomplete="off" placeholder="••••" value="${esc(st.codeInput)}"
+      oninput="this.value=this.value.replace(/\\D/g,'');st.codeInput=this.value" onkeydown="if(event.key==='Enter')submitCode()">
+    ${st.loginErr?`<div class="loginErr">${esc(st.loginErr)}</div>`:""}
+    <button class="modalOk loginBtn" onclick="submitCode()">${setup?"Nastaviť PIN":"Prihlásiť"}</button>
+    <div class="loginHint">${setup?"PIN správcu otvára prehľad všetkých zamestnancov.":"Po prihlásení potvrdíte zápis príchodu alebo odchodu."}</div>
+  </div></div>`;
+}
+function headerHtml(){
+  const who=st.role==="admin"?(st.me?"Správca · "+empName(st.me):"Hlavný správca"):empName(st.me);
+  return `<header>
+    <div class="brandRow">
+      <div class="brandMark">◴</div>
+      <div><div class="brandTitle">Dochádzka</div><div class="brandSub">Hotel Demänová · ${esc(who)}</div></div>
+      <div class="status" id="status">${st.saving?"Ukladám…":"Online"}</div>
+      <button class="logoutBtn" onclick="logout()">Odhlásiť</button>
+    </div>
+    <div class="monthNav">
+      <button class="navBtn" onclick="changeMonth(-1)" aria-label="Predchádzajúci mesiac">‹</button>
+      <div class="monthLabel">${MONTHS[st.month]} ${st.year}</div>
+      <button class="navBtn" onclick="changeMonth(1)" aria-label="Nasledujúci mesiac">›</button>
+    </div>
+  </header>
+  <div class="err" id="errBox" style="${st.err?"":"display:none"}">${esc(st.err)}</div>`;
+}
+function appHtml(){
+  let html=headerHtml();
+  if(st.me&&(st.role==="emp"||st.adminView==="summary"))html+=`<div id="punchBox">${punchCard()}</div>`;
+  if(st.role==="admin"&&st.adminView==="summary")return html+adminSummaryHtml();
+  if(st.role==="admin")html+=`<div class="detailBar"><button class="tab" onclick="backToSummary()">‹ Sumár</button><div class="detailName">${esc(empName(st.activeEmp))}</div></div>`;
+  html+=`<div class="tabs">
+    <button class="tab ${st.tab==='grid'?'active':''}" onclick="st.tab='grid';render()">Dochádzka</button>
+    <button class="tab ${st.tab==='summary'?'active':''}" onclick="st.tab='summary';render()">Súhrn</button>
+    <button class="tab" onclick="printEmps(['${st.activeEmp}'])" title="Tlačiť do PDF">🖨 PDF</button>
+    ${st.role==="admin"?`<button class="delEmp" onclick="removeEmployee('${st.activeEmp}')">Odstrániť zam.</button>`:``}
+  </div>`;
+  const rs=rowsFor(st.monthData,st.year,st.month);const sm=summaryFor(rs,st.year,st.month);
+  html+=st.tab==="grid"?gridHtml(rs,sm):summaryHtml(rs,sm);
+  html+=`<div class="footer">${st.role==="emp"?"Vidíte iba svoju dochádzku. ":""}Tab = ďalší stĺpec, Enter = ďalší riadok. Potiahnutím tabuľky doľava zobrazíte poznámky.</div>`;
+  return html;
+}
+function gridHtml(rs,sm){
+  let html=`<div class="tableWrap"><table><thead><tr>
+    <th class="date">Dátum</th><th>Príchod</th><th>Odchod</th><th>Prest.</th><th>Odprac.</th>
+    <th class="narrow">Obed</th><th class="narrow">Večera</th><th>Poznámka</th></tr></thead><tbody>`;
+  rs.forEach(r=>{
+    const cls=r.hol?"hol":(r.isSun?"sun":(r.isSat?"sat":""));const d=r.day;
+    html+=`<tr class="${cls}">
+      <td class="date"${r.holName?` title="${esc(r.holName)}"`:""}><span class="dnum">${d}.</span><span class="dow">${DOW[r.dow]}</span>${r.hol?'<span class="holTag">●</span>':''}</td>
+      <td><input class="timeText" id="arr-${d}" type="text" inputmode="numeric" autocomplete="off" value="${r.arr}" placeholder="–:–" aria-label="Príchod ${d}." onfocus="this.select()" onkeydown="cellKey(event,'arr-',${d})" onchange="setCell(${d},'arr',parseTime(this.value))"></td>
+      <td><input class="timeText" id="dep-${d}" type="text" inputmode="numeric" autocomplete="off" value="${r.dep}" placeholder="–:–" aria-label="Odchod ${d}." onfocus="this.select()" onkeydown="cellKey(event,'dep-',${d})" onchange="setCell(${d},'dep',parseTime(this.value))"></td>
+      <td class="num" style="opacity:.7" id="brk-${d}">${r.brk?r.brk.toFixed(1):"—"}</td>
+      <td class="num" style="font-weight:700" id="wrk-${d}">${r.worked?h2(r.worked):"—"}</td>
+      <td><button class="xbtn ${r.lunch?'on':''}" id="lu-${d}" aria-label="Obed ${d}." aria-pressed="${r.lunch}" onclick="toggleCell(${d},'lunch')">${r.lunch?"✕":""}</button></td>
+      <td><button class="xbtn ${r.dinner?'on':''}" id="di-${d}" aria-label="Večera ${d}." aria-pressed="${r.dinner}" onclick="toggleCell(${d},'dinner')">${r.dinner?"✕":""}</button></td>
+      <td class="note"><input class="noteInput" id="note-${d}" type="text" value="${esc(r.note)}" placeholder="${r.holName?esc(r.holName.split(" – ")[0]):"…"}" aria-label="Poznámka ${d}." onkeydown="cellKey(event,'note-',${d})" onchange="setCell(${d},'note',this.value)"></td>
+    </tr>`;
+  });
+  html+=`</tbody><tfoot><tr>
+    <td class="lbl" colspan="4">Spolu odpracované</td>
+    <td class="num" style="font-weight:800" id="ft-tw">${h2(sm.tw)}</td>
+    <td style="text-align:center" id="ft-lu">${sm.lunch}</td>
+    <td style="text-align:center" id="ft-di">${sm.dinner}</td><td></td>
+  </tr></tfoot></table>
+  <div class="legend"><span><i style="background:#f4e2c4"></i>Sobota</span><span><i style="background:#f3d2d2"></i>Nedeľa</span><span><i style="background:#d9e8d2"></i>Sviatok</span></div>
+  </div>`;
+  return html;
+}
+function holNote(){
+  if(st.year===2026&&(st.month===4||st.month===8))
+    return `<div class="sumNote2"><b>${st.month===4?"8. máj":"15. september"} 2026</b> je podľa zákona pracovný deň (počíta sa do fondu), ale za prácu v tento deň patrí príplatok za sviatok – hodiny sú preto v riadku „Práca cez sviatok“.</div>`;
+  return "";
+}
+function summaryHtml(rs,sm){
+  return `<div class="sumWrap"><table class="sumTable"><tbody>
+    <tr class="strong"><td>Pracovný fond<div class="sub">${sm.wd} prac. dní × 8 h</div></td><td class="v">${sm.fund} h</td></tr>
+    <tr class="strong"><td>Spolu odpracované</td><td class="v">${h2(sm.tw)} h</td></tr>
+    <tr><td>Práca v sobotu</td><td class="v">${h2(sm.sat)} h</td></tr>
+    <tr><td>Práca v nedeľu</td><td class="v">${h2(sm.sun)} h</td></tr>
+    <tr><td>Práca cez sviatok</td><td class="v">${h2(sm.h)} h</td></tr>
+    <tr><td>Práca v noci (22–6)</td><td class="v">${h2(sm.night)} h</td></tr>
+    <tr class="accent"><td>Nadčas (nad fond)</td><td class="v">${h2(sm.overtime)} h</td></tr>
+  </tbody></table>
+  <div class="sumNote">Obedy: <b>${sm.lunch}</b> · Večere: <b>${sm.dinner}</b> · Strava spolu: <b>${sm.lunch+sm.dinner}</b></div>
+  <div class="sumNote2">Prestávka automaticky: 5–12,5 h → 0,5 h, nad 12,5 h → 1 h. Nadčas = odpracované hodiny nad mesačný pracovný fond.</div>
+  ${holNote()}
+  </div>`;
+}
+function adminSummaryHtml(){
+  const now=new Date();const isCur=mkOf(now)===monthKey();const tdd=ddOf(now);
+  let html=`<div class="empBar">
+    <div class="sumTitle">Sumár zamestnancov</div>
+    <div class="addWrap">
+      <input class="addInput" id="newName" placeholder="+ zamestnanec" value="${esc(st.newName)}"
+        oninput="st.newName=this.value" onkeydown="if(event.key==='Enter')addEmployee()">
+      <button class="addBtn" onclick="addEmployee()">Pridať</button>
+      <button class="tab" onclick="printEmps()" title="Tlačiť všetkých do PDF">🖨 PDF</button>
+    </div>
+  </div>`;
+  if(!st.employees.length)return html+`<div class="loading">Pridajte prvého zamestnanca vyššie.</div>`;
+  html+="<!--INCNT-->";
+  const T={tw:0,sat:0,sun:0,h:0,night:0,overtime:0,lunch:0,dinner:0};let fund=0;
+  let body="",inCnt=0;const master=isMaster();
+  const yd=new Date(now.getFullYear(),now.getMonth(),now.getDate()-1);const ydd=mkOf(yd)===monthKey()?ddOf(yd):null;
+  st.employees.forEach(e=>{
+    const md=st.bank[e.id]||{};const rs=rowsFor(md,st.year,st.month);const sm=summaryFor(rs,st.year,st.month);
+    Object.keys(T).forEach(k=>T[k]+=sm[k]);fund=sm.fund;
+    let today="",atWork=false;
+    if(isCur){const c=md[tdd]||{};const y=ydd?(md[ydd]||{}):{};
+      if(c.arr&&!c.dep){atWork=true;today=`<span class="badge in">● v práci od ${c.arr}</span>`;}
+      else if(!c.arr&&y.arr&&!y.dep&&(1440-toMin(y.arr)+now.getHours()*60+now.getMinutes())<=16*60){atWork=true;today=`<span class="badge in">● v práci od včera ${y.arr}</span>`;}
+      else today=c.arr&&c.dep?`<span class="badge out">${c.arr}–${c.dep}</span>`:`<span class="badge none">—</span>`;
+      if(atWork)inCnt++;}
+    body+=`<tr class="${atWork?"atWork":""}">
+      <td class="nm"><button class="nameBtn" id="emp-${e.id}" onclick="openEmp('${e.id}')">${esc(e.name)} ›</button></td>
+      <td><input class="codeInput" id="kod-${e.id}" type="text" inputmode="numeric" autocomplete="off" value="${esc(st.codes[e.id]||"")}" aria-label="Kód – ${esc(e.name)}" onfocus="this.select()" onchange="saveCode('${e.id}',this.value)"></td>
+      <td>${master?`<input type="checkbox" class="admChk" id="adm-${e.id}" aria-label="Správca – ${esc(e.name)}" ${st.admins[e.id]?"checked":""} onchange="setAdmin('${e.id}',this.checked)">`:(st.admins[e.id]?"✓":"")}</td>
+      ${isCur?`<td>${today}</td>`:""}
+      <td class="num">${sm.days}</td>
+      <td class="num b">${h2(sm.tw)}</td>
+      <td class="num ${sm.overtime>0?"ot":""}">${h2(sm.overtime)}</td>
+      <td class="num">${h2(sm.sat)}</td><td class="num">${h2(sm.sun)}</td><td class="num">${h2(sm.h)}</td><td class="num">${h2(sm.night)}</td>
+      <td class="num">${sm.lunch}</td><td class="num">${sm.dinner}</td>
+    </tr>`;
+  });
+  html+=`<div class="tableWrap"><table class="allTab"><thead><tr>
+    <th class="date">Zamestnanec</th><th>Kód</th><th>Správca</th>${isCur?"<th>Dnes</th>":""}<th>Dni</th><th>Odprac.</th><th>Nadčas</th>
+    <th>Sobota</th><th>Nedeľa</th><th>Sviatok</th><th>Noc</th><th>Obedy</th><th>Večere</th></tr></thead>
+    <tbody>${body}</tbody>
+    <tfoot><tr><td class="lbl" colspan="${isCur?5:4}">Spolu</td>
+      <td class="num">${h2(T.tw)}</td><td class="num">${h2(T.overtime)}</td><td class="num">${h2(T.sat)}</td><td class="num">${h2(T.sun)}</td>
+      <td class="num">${h2(T.h)}</td><td class="num">${h2(T.night)}</td><td class="num">${T.lunch}</td><td class="num">${T.dinner}</td></tr></tfoot>
+  </table></div>
+  <div class="sumNote2">Pracovný fond v mesiaci: <b>${fund} h</b>. Hodnoty sú v hodinách. Ťuknutím na meno otvoríte dochádzku zamestnanca; kód v tabuľke môžete prepísať.${master?" Zaškrtnutím „Správca“ určíte, kto ďalší po zadaní svojho kódu uvidí všetkých.":""}</div>
+  ${holNote()}
+  <div class="footer">Prihlásený správca vidí všetkých. Zamestnanec po zadaní svojho kódu vidí iba seba.</div>`;
+  return html.replace("<!--INCNT-->",isCur?`<div class="inNow"><i></i>Práve v práci: <b>${inCnt}</b> z ${st.employees.length}</div>`:"");
+}
+
+/* ====== TLAČ PDF (aktuálny mesiac; bez parametra všetci – len správca) ====== */
+async function printEmps(ids){
+  let list=st.employees;
+  if(st.role!=="admin")list=list.filter(e=>e.id===st.me);
+  else if(ids)list=list.filter(e=>ids.indexOf(e.id)>=0);
+  if(!list.length){alert("Žiadni zamestnanci na tlač.");return;}
+  st.printMode=true;
+  const mk=monthKey();
+  let bank={};
+  try{
+    let q=sb.from("dochadzka").select("emp_id,data").eq("mesiac",mk);
+    if(list.length===1)q=q.eq("emp_id",list[0].id);
+    const {data}=await q;
+    (data||[]).forEach(r=>{bank[r.emp_id]=r.data||{};});
+  }catch(e){alert("Nepodarilo sa načítať dáta na tlač.");st.printMode=false;return;}
+
+  const mon=MONTHS[st.month]+" "+st.year;
+  const stamp=(()=>{const n=new Date();return n.getDate()+". "+(n.getMonth()+1)+". "+n.getFullYear();})();
+  const per=[];
+  list.forEach(emp=>{const rs=rowsFor(bank[emp.id]||{},st.year,st.month);per.push({emp,rs,sm:summaryFor(rs,st.year,st.month)});});
+  const total=per.length+(per.length>1?1:0);let pno=0;
+  const foot=name=>`<div class="pfoot"><span>Hotel Demänová · Dochádzka ${mon}${name?" · "+esc(name):""}</span><span>Vytlačené ${stamp} · strana ${++pno} / ${total}</span></div>`;
+  let pages="";
+  // pri tlači viacerých: prvá strana = súhrn všetkých
+  if(per.length>1){
+    const T={tw:0,overtime:0,sat:0,sun:0,h:0,night:0,lunch:0,dinner:0};let body="";
+    per.forEach(({emp,sm})=>{Object.keys(T).forEach(k=>T[k]+=sm[k]);
+      body+=`<tr><td class="pd">${esc(emp.name)}</td><td>${sm.days}</td><td><b>${h2(sm.tw)}</b></td><td class="${sm.overtime>0?"acc":""}">${h2(sm.overtime)}</td>
+        <td>${h2(sm.sat)}</td><td>${h2(sm.sun)}</td><td>${h2(sm.h)}</td><td>${h2(sm.night)}</td><td>${sm.lunch}</td><td>${sm.dinner}</td></tr>`;});
+    pages+=`<section class="page">
+      <div class="phead"><div><div class="pkick">Hotel Demänová · Dochádzka</div><div class="pname">Súhrn zamestnancov</div></div>
+        <div class="pmonth">${mon}<small>Pracovný fond ${per[0].sm.fund} h (${per[0].sm.wd} × 8)</small></div></div>
+      <table class="pall"><thead><tr><th class="pd">Zamestnanec</th><th>Dni</th><th>Odprac. h</th><th>Nadčas</th><th>Sobota</th><th>Nedeľa</th><th>Sviatok</th><th>Noc</th><th>Obedy</th><th>Večere</th></tr></thead>
+        <tbody>${body}</tbody>
+        <tfoot><tr><td class="pd">Spolu</td><td></td><td>${h2(T.tw)}</td><td>${h2(T.overtime)}</td><td>${h2(T.sat)}</td><td>${h2(T.sun)}</td><td>${h2(T.h)}</td><td>${h2(T.night)}</td><td>${T.lunch}</td><td>${T.dinner}</td></tr></tfoot>
+      </table>
+      <div class="pfill"></div>
+      ${foot("")}
+    </section>`;
+  }
+  per.forEach(({emp,rs,sm})=>{
+    let body="";
+    rs.forEach(r=>{
+      const cls=r.hol?"phol":(r.isSun?"psun":(r.isSat?"psat":""));
+      const note=r.note?esc(r.note):(r.holName?`<i>${esc(r.holName.split(" – ")[0])}</i>`:"");
+      const e=v=>v?`<td>${v}</td>`:`<td class="mut">–</td>`;
+      body+=`<tr class="${cls}">
+        <td class="pd"><b>${r.day}.</b> <span>${DOW[r.dow]}</span></td>
+        ${e(r.arr)}${e(r.dep)}${e(r.brk?r.brk.toFixed(1):"")}
+        ${r.worked?`<td class="pb">${h2(r.worked)}</td>`:`<td class="mut">–</td>`}
+        <td>${r.lunch?"✕":""}</td><td>${r.dinner?"✕":""}</td>
+        <td class="pn">${note}</td></tr>`;
+    });
+    pages+=`<section class="page">
+      <div class="phead"><div><div class="pkick">Hotel Demänová · Dochádzka</div><div class="pname">${esc(emp.name)}</div></div>
+        <div class="pmonth">${mon}<small>Pracovný fond ${sm.fund} h (${sm.wd} × 8)</small></div></div>
+      <div class="pgrow"><table class="ptab">
+        <colgroup><col class="cD"><col class="cT"><col class="cT"><col class="cP"><col class="cW"><col class="cX"><col class="cX"><col class="cN"></colgroup>
+        <thead><tr>
+        <th class="pd">Dátum</th><th>Príchod</th><th>Odchod</th><th>Prestávka</th><th>Odprac.</th><th>Obed</th><th>Večera</th><th class="pn">Poznámka</th>
+      </tr></thead><tbody>${body}</tbody>
+      <tfoot><tr><td colspan="4" style="text-align:right">Spolu odpracované</td>
+        <td class="pb">${h2(sm.tw)}</td><td>${sm.lunch}</td><td>${sm.dinner}</td><td></td></tr></tfoot>
+      </table></div>
+      <div class="psumT">Mesačný súhrn</div>
+      <table class="psum"><tbody>
+        <tr>
+          <td class="k">Pracovný fond</td><td class="k">Odpracované</td><td class="k">Sobota</td><td class="k">Nedeľa</td>
+          <td class="k">Sviatok</td><td class="k">Noc 22–6</td><td class="k acc">Nadčas</td><td class="k">Obedy</td><td class="k">Večere</td>
+        </tr>
+        <tr>
+          <td class="val">${sm.fund} h</td><td class="val">${h2(sm.tw)} h</td><td class="val">${h2(sm.sat)} h</td><td class="val">${h2(sm.sun)} h</td>
+          <td class="val">${h2(sm.h)} h</td><td class="val">${h2(sm.night)} h</td><td class="val acc">${h2(sm.overtime)} h</td>
+          <td class="val">${sm.lunch}</td><td class="val">${sm.dinner}</td>
+        </tr>
+      </tbody></table>
+      <div class="plegend"><span><i style="background:#fbf1de"></i>Sobota</span><span><i style="background:#fae7e7"></i>Nedeľa</span><span><i style="background:#e6f1dd"></i>Sviatok</span></div>
+      <div class="psign">
+        <div class="sigBox"><div class="sigLine"></div><div class="sigLbl">Podpis zamestnanca</div></div>
+        <div class="sigBox"><div class="sigLine"></div><div class="sigLbl">Schválil</div></div>
+      </div>
+      ${foot(emp.name)}
+    </section>`;
+  });
+
+  const cont=document.createElement("div");
+  cont.id="printArea";
+  cont.innerHTML=pages;
+  document.body.appendChild(cont);
+  document.body.classList.add("printing");
+  setTimeout(()=>{
+    window.print();
+    setTimeout(()=>{
+      document.body.removeChild(cont);
+      document.body.classList.remove("printing");
+      st.printMode=false;
+    },400);
+  },200);
+}
+
+/* ====== ŠTART ====== */
+["pointerdown","keydown","touchstart"].forEach(ev=>document.addEventListener(ev,()=>{st.lastActive=Date.now();},{passive:true}));
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&st.punchAsk)closeAsk();});
+(async function(){
+  try{
+    await Promise.all([loadEmployees(),loadSettings()]);
+    if(!st.adminPin)st.setupPin=true;
+  }catch(e){st.err="Chyba pripojenia k databáze.";st.loginErr=st.err;}
+  st.loading=false; render();
+  // čas na tlačidle príchod/odchod + automatické odhlásenie zamestnanca
+  setInterval(()=>{
+    if(st.role==="emp"&&!st.printMode&&Date.now()-st.lastActive>IDLE_LOGOUT_MS){logout();return;}
+    const el=document.getElementById("punchTime");if(el)el.textContent=hmOf(roundAt(el.dataset.dir));
+  },5000);
+  // periodické obnovenie
+  setInterval(async()=>{
+    if(!st.role||st.printMode||st.punching)return;
+    const ae=document.activeElement;
+    if(ae&&(ae.tagName==="INPUT"||ae.tagName==="TEXTAREA"||ae.tagName==="SELECT"))return; // nerušiť pri písaní
+    if(Date.now()-st.lastEdit<8000)return;
+    const role=st.role,emp=st.activeEmp,mk=monthKey();
+    await loadEmployees();
+    if(role==="admin"){await loadSettings();await loadBank();}
+    if(emp){const d=await fetchMonth(emp,mk);if(st.activeEmp===emp&&monthKey()===mk&&Date.now()-st.lastEdit>=8000)st.monthData=d;}
+    if(st.role!==role)return;
+    if(st.me){
+      if(!st.employees.find(e=>e.id===st.me)||(st.role==="admin"&&!st.admins[st.me])){logout();return;}
+      await refreshPunch();
+    }
+    if(Date.now()-st.lastEdit<8000)return;
+    render();
+  },15000);
+})();
+</script>
+</body>
+</html>
