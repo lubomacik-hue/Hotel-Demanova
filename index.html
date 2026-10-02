@@ -126,6 +126,7 @@ button:active{transform:scale(.97);}
 .allTab tr.atWork td,.allTab tr.atWork td.nm,.allTab tbody tr.atWork:hover td{background:#dcefd0;}
 .allTab tr.atWork td.nm{box-shadow:inset 4px 0 0 #4f7a3a;}
 .allTab tr.atWork .badge.in{background:#4f7a3a;color:#fff;}
+.rmBtn{padding:5px 10px;border-radius:8px;border:1px solid #e7c9c9;background:#fff;color:#a14848;font-size:12px;cursor:pointer;font-family:inherit;white-space:nowrap;}
 .admChk{width:20px;height:20px;accent-color:var(--gold);cursor:pointer;}
 .inNow{padding:0 16px 10px;font-size:14px;}
 .inNow i{display:inline-block;width:10px;height:10px;border-radius:50%;background:#4f7a3a;margin-right:7px;}
@@ -513,7 +514,8 @@ async function addEmployee(){
 }
 async function removeEmployee(id){
   if(st.role!=="admin")return;
-  if(!confirm("Odstrániť zamestnanca „"+empName(id)+"“ a celú jeho dochádzku?"))return;
+  if(id===st.me){alert("Sám seba odobrať nemôžete.");return;}
+  if(!confirm("Odobrať zamestnanca „"+empName(id)+"“?\n\nZmaže sa aj celá jeho dochádzka za všetky mesiace. Toto sa nedá vrátiť."))return;
   await sb.from("dochadzka").delete().eq("emp_id",id);
   await sb.from("nastavenia").delete().eq("kluc","kod:"+id);
   await sb.from("nastavenia").delete().eq("kluc","admin:"+id);
@@ -721,15 +723,16 @@ function adminSummaryHtml(){
       <td class="num ${sm.overtime>0?"ot":""}">${h2(sm.overtime)}</td>
       <td class="num">${h2(sm.sat)}</td><td class="num">${h2(sm.sun)}</td><td class="num">${h2(sm.h)}</td><td class="num">${h2(sm.night)}</td>
       <td class="num">${sm.lunch}</td><td class="num">${sm.dinner}</td>
+      <td><button class="rmBtn" id="rm-${e.id}" title="Odobrať zamestnanca" aria-label="Odobrať – ${esc(e.name)}" onclick="removeEmployee('${e.id}')">✕ Odobrať</button></td>
     </tr>`;
   });
   html+=`<div class="tableWrap"><table class="allTab"><thead><tr>
     <th class="date">Zamestnanec</th><th>Kód</th><th>Správca</th>${isCur?"<th>Dnes</th>":""}<th>Dni</th><th>Odprac.</th><th>Nadčas</th>
-    <th>Sobota</th><th>Nedeľa</th><th>Sviatok</th><th>Noc</th><th>Obedy</th><th>Večere</th></tr></thead>
+    <th>Sobota</th><th>Nedeľa</th><th>Sviatok</th><th>Noc</th><th>Obedy</th><th>Večere</th><th></th></tr></thead>
     <tbody>${body}</tbody>
     <tfoot><tr><td class="lbl" colspan="${isCur?5:4}">Spolu</td>
       <td class="num">${h2(T.tw)}</td><td class="num">${h2(T.overtime)}</td><td class="num">${h2(T.sat)}</td><td class="num">${h2(T.sun)}</td>
-      <td class="num">${h2(T.h)}</td><td class="num">${h2(T.night)}</td><td class="num">${T.lunch}</td><td class="num">${T.dinner}</td></tr></tfoot>
+      <td class="num">${h2(T.h)}</td><td class="num">${h2(T.night)}</td><td class="num">${T.lunch}</td><td class="num">${T.dinner}</td><td></td></tr></tfoot>
   </table></div>
   <div class="sumNote2">Pracovný fond v mesiaci: <b>${fund} h</b>. Hodnoty sú v hodinách. Ťuknutím na meno otvoríte dochádzku zamestnanca; kód v tabuľke môžete prepísať.${master?" Zaškrtnutím „Správca“ určíte, kto ďalší po zadaní svojho kódu uvidí všetkých.":""}</div>
   ${holNote()}
