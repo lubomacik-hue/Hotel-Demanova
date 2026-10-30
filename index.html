@@ -283,12 +283,17 @@ function parseTime(raw){
 }
 function breakFor(w){if(w>12.5)return 1;if(w>=5)return 0.5;return 0;}
 function shift(arr,dep){const a=toMin(arr),d0=toMin(dep);if(a===null||d0===null)return null;let d=d0;if(d<=a)d+=1440;const gm=d-a;if(gm<=0)return null;const gh=gm/60;const brk=breakFor(gh);let night=0;for(let mm=a;mm<d;mm++){const t=((mm%1440)+1440)%1440;if(t>=1320||t<360)night++;}return{brk,worked:gh-brk,night:night/60};}
-/* deň môže mať 2 časti (trhačka): arr/dep a arr2/dep2; prestávka sa počíta pre každú súvislú časť zvlášť */
+/* deň môže mať 2 časti (trhačka): arr/dep a arr2/dep2.
+   Pri trhačke sa odpočíta presne pauza medzi odchodom a 2. príchodom (čas doma) –
+   automatická prestávka 0,5/1 h sa v ten deň nepočíta. Stĺpec Prest. ukazuje dĺžku pauzy. */
 function dayCalc(c){
-  const a=shift(c.arr,c.dep),b=shift(c.arr2,c.dep2);
+  if(!(c.arr2||c.dep2))return shift(c.arr,c.dep);
+  const g=(x,y)=>{const s=shift(x,y);return s?{gross:s.worked+s.brk,night:s.night}:null;};
+  const a=g(c.arr,c.dep),b=g(c.arr2,c.dep2);
   if(!a&&!b)return null;
-  const z={brk:0,worked:0,night:0};
-  return{brk:(a||z).brk+(b||z).brk,worked:(a||z).worked+(b||z).worked,night:(a||z).night+(b||z).night};
+  let gap=0;
+  if(c.dep&&c.arr2){gap=toMin(c.arr2)-toMin(c.dep);if(gap<0)gap+=1440;gap/=60;}
+  return{brk:gap,worked:(a?a.gross:0)+(b?b.gross:0),night:(a?a.night:0)+(b?b.night:0)};
 }
 /* otvorená (nezatvorená) časť dňa */
 function openSeg(c){if(c.arr&&!c.dep)return{a:"arr",d:"dep"};if(c.arr2&&!c.dep2)return{a:"arr2",d:"dep2"};return null;}
@@ -700,7 +705,7 @@ function gridHtml(rs,sm){
       <td class="date"><span class="subLbl">↳ 2. časť</span></td>
       <td><input class="timeText" id="arr2-${d}" type="text" inputmode="numeric" autocomplete="off" value="${r.arr2}" placeholder="–:–" aria-label="2. príchod ${d}." onfocus="this.select()" onkeydown="cellKey(event,'arr2-',${d})" onchange="setCell(${d},'arr2',parseTime(this.value))"></td>
       <td><input class="timeText" id="dep2-${d}" type="text" inputmode="numeric" autocomplete="off" value="${r.dep2}" placeholder="–:–" aria-label="2. odchod ${d}." onfocus="this.select()" onkeydown="cellKey(event,'dep2-',${d})" onchange="setCell(${d},'dep2',parseTime(this.value))"></td>
-      <td colspan="5" class="subInfo">trhačka – hodiny sú spolu v riadku vyššie <button class="rmSplit" tabindex="-1" onclick="removeSplit(${d})" aria-label="Zrušiť 2. časť dňa ${d}.">✕ zrušiť</button></td>
+      <td colspan="5" class="subInfo">trhačka – pauza doma sa odpočíta, hodiny sú v riadku vyššie <button class="rmSplit" tabindex="-1" onclick="removeSplit(${d})" aria-label="Zrušiť 2. časť dňa ${d}.">✕ zrušiť</button></td>
     </tr>`;
   });
   html+=`</tbody><tfoot><tr>
@@ -729,7 +734,7 @@ function summaryHtml(rs,sm){
     <tr class="accent"><td>Nadčas (nad fond)</td><td class="v">${h2(sm.overtime)} h</td></tr>
   </tbody></table>
   <div class="sumNote">Obedy: <b>${sm.lunch}</b> · Večere: <b>${sm.dinner}</b> · Strava spolu: <b>${sm.lunch+sm.dinner}</b></div>
-  <div class="sumNote2">Prestávka automaticky: 5–12,5 h → 0,5 h, nad 12,5 h → 1 h. Nadčas = odpracované hodiny nad mesačný pracovný fond.</div>
+  <div class="sumNote2">Prestávka automaticky: 5–12,5 h → 0,5 h, nad 12,5 h → 1 h. Pri trhačke sa namiesto toho odpočíta pauza doma (čas medzi odchodom a 2. príchodom). Nadčas = odpracované hodiny nad mesačný pracovný fond.</div>
   ${holNote()}
   </div>`;
 }
