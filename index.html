@@ -134,6 +134,11 @@ tr.has-sub td{border-bottom:none;}
 .subLbl{font-size:11px;opacity:.65;padding-left:4px;}
 td.subInfo{text-align:left;font-size:11px;opacity:.75;white-space:nowrap;}
 .rmSplit{margin-left:8px;padding:3px 8px;border-radius:7px;border:1px solid #e7c9c9;background:#fff;color:#a14848;font-size:11px;cursor:pointer;font-family:inherit;}
+.subHd{font-size:10px;opacity:.55;margin-right:4px;}
+.badge.pause{background:#fff1dc;color:#a35f00;font-weight:700;}
+.punchBtn.small{padding:12px 14px;}
+.punchBtn.small .pbLbl{font-size:18px;}
+.punchBtn.small .pbTime{font-size:18px;}
 .pbTwo{display:block;font-family:'Inria Serif',Georgia,serif;font-size:12px;font-weight:400;opacity:.85;letter-spacing:.5px;text-transform:uppercase;}
 .admChk{width:20px;height:20px;accent-color:var(--gold);cursor:pointer;}
 .inNow{padding:0 16px 10px;font-size:14px;}
@@ -283,20 +288,36 @@ function parseTime(raw){
 }
 function breakFor(w){if(w>12.5)return 1;if(w>=5)return 0.5;return 0;}
 function shift(arr,dep){const a=toMin(arr),d0=toMin(dep);if(a===null||d0===null)return null;let d=d0;if(d<=a)d+=1440;const gm=d-a;if(gm<=0)return null;const gh=gm/60;const brk=breakFor(gh);let night=0;for(let mm=a;mm<d;mm++){const t=((mm%1440)+1440)%1440;if(t>=1320||t<360)night++;}return{brk,worked:gh-brk,night:night/60};}
-/* deň môže mať 2 časti (trhačka): arr/dep a arr2/dep2.
-   Pri trhačke sa odpočíta presne pauza medzi odchodom a 2. príchodom (čas doma) –
-   automatická prestávka 0,5/1 h sa v ten deň nepočíta. Stĺpec Prest. ukazuje dĺžku pauzy. */
+/* trhačka = príchod (arr), konečný odchod (dep) a pauza doma od (po) – do (pd).
+   Odpracované = od príchodu po odchod mínus pauza doma; automatická prestávka sa v ten deň nepočíta.
+   Stĺpec Prest. ukazuje dĺžku pauzy. */
+function gapH(a,b){let g=toMin(b)-toMin(a);if(g<0)g+=1440;return g/60;}
+function nightIn(a,b){const x=toMin(a),y0=toMin(b);if(x===null||y0===null)return 0;let y=y0;if(y<=x)y+=1440;let n=0;for(let m=x;m<y;m++){const t=m%1440;if(t>=1320||t<360)n++;}return n/60;}
 function dayCalc(c){
-  if(!(c.arr2||c.dep2))return shift(c.arr,c.dep);
-  const g=(x,y)=>{const s=shift(x,y);return s?{gross:s.worked+s.brk,night:s.night}:null;};
-  const a=g(c.arr,c.dep),b=g(c.arr2,c.dep2);
-  if(!a&&!b)return null;
-  let gap=0;
-  if(c.dep&&c.arr2){gap=toMin(c.arr2)-toMin(c.dep);if(gap<0)gap+=1440;gap/=60;}
-  return{brk:gap,worked:(a?a.gross:0)+(b?b.gross:0),night:(a?a.night:0)+(b?b.night:0)};
+  if(!(c.po||c.pd))return shift(c.arr,c.dep);
+  const s=shift(c.arr,c.dep);if(!s)return null;
+  const gross=s.worked+s.brk;
+  const pause=c.po&&c.pd?gapH(c.po,c.pd):0;
+  const worked=Math.max(0,gross-pause);
+  return{brk:pause,worked,night:Math.max(0,s.night-(c.po&&c.pd?nightIn(c.po,c.pd):0))};
 }
-/* otvorená (nezatvorená) časť dňa */
-function openSeg(c){if(c.arr&&!c.dep)return{a:"arr",d:"dep"};if(c.arr2&&!c.dep2)return{a:"arr2",d:"dep2"};return null;}
+/* staršie záznamy s 2. príchodom/odchodom (arr2/dep2) prevedie na pauzu */
+function normDay(c){
+  if(!c||!(c.arr2||c.dep2))return c;
+  const o={...c};const a2=o.arr2,d2=o.dep2;delete o.arr2;delete o.dep2;
+  const A=toMin(o.arr),D=toMin(o.dep),P=toMin(a2),Q=toMin(d2);
+  if(A!==null&&D!==null&&P!==null&&Q!==null&&D>A&&P>A&&Q<D&&Q>P){o.po=a2;o.pd=d2;}   // zadané ako pauza vnútri dňa
+  else{ if(o.dep)o.po=o.dep; if(a2)o.pd=a2; o.dep=d2||""; if(!o.dep)delete o.dep; } // zadané ako 2 časti
+  return o;
+}
+function normMonth(d){const o={};Object.keys(d||{}).forEach(k=>{o[k]=normDay(d[k]);});return o;}
+/* stav dňa pre tlačidlo: v práci / na pauze */
+function dayState(c){
+  if(!c.arr)return "none";
+  if(c.po&&!c.pd)return "pause";
+  if(!c.dep)return "work";
+  return "done";
+}
 function dim(y,m){return new Date(y,m+1,0).getDate();}
 function r1(n){return Math.round(n*100)/100;}
 function h2(n){return r1(n).toFixed(2);}
@@ -339,7 +360,7 @@ async function loadSettings(){
 }
 async function fetchMonth(empId,mk){
   const {data}=await sb.from("dochadzka").select("data").eq("emp_id",empId).eq("mesiac",mk).maybeSingle();
-  return data&&data.data?data.data:{};
+  return data&&data.data?normMonth(data.data):{};
 }
 async function loadMonth(){
   if(!st.activeEmp){st.monthData={};return;}
@@ -348,7 +369,7 @@ async function loadMonth(){
 async function loadBank(){
   const {data,error}=await sb.from("dochadzka").select("emp_id,data").eq("mesiac",monthKey());
   if(error){st.err="Chyba pri načítaní dochádzky.";return;}
-  const b={};(data||[]).forEach(r=>{b[r.emp_id]=r.data||{};});st.bank=b;
+  const b={};(data||[]).forEach(r=>{b[r.emp_id]=normMonth(r.data||{});});st.bank=b;
 }
 async function saveEmployees(){
   const rows=st.employees.map((e,i)=>({id:e.id,meno:e.name,poradie:i}));
@@ -432,7 +453,7 @@ async function submitCode(){
   }
   // po prihlásení vyskočí okno „Zapísať príchod/odchod“ s časom otvorenia – nič sa nezapíše bez potvrdenia
   await refreshPunch();
-  st.punchAsk=(st.punch&&(st.punch.action==="arr"||st.punch.action==="dep"))?{at:new Date(),action:st.punch.action,field:st.punch.field}:null;
+  st.punchAsk=(st.punch&&(st.punch.action==="arr"||st.punch.action==="dep"||(st.punch.action==="back"&&!st.punch.fromDep)))?{at:new Date(),action:st.punch.action}:null;
   render();
 }
 async function enterAdmin(meId){
@@ -455,15 +476,15 @@ async function refreshPunch(){
   const tData=await myMonth(tk);
   const yData=yk===tk?tData:await myMonth(yk);
   const t=tData[tdd]||{};const y=yData[ddOf(yd)]||{};
-  const ot=openSeg(t),oy=openSeg(y);
-  const first=t.arr&&t.dep?t.arr+"–"+t.dep:"";
+  const ts=dayState(t),ys=dayState(y);
+  const sinceY=c=>1440-toMin(c)+now.getHours()*60+now.getMinutes();
   let p;
-  if(ot)p={action:"dep",field:ot.d,mk:tk,dd:tdd,arr:t[ot.a],second:ot.a==="arr2",first};
-  else if(!t.arr&&oy&&(1440-toMin(y[oy.a])+now.getHours()*60+now.getMinutes())<=16*60)
-    p={action:"dep",field:oy.d,mk:yk,dd:ddOf(yd),arr:y[oy.a],overnight:true};
-  else if(!t.arr)p={action:"arr",field:"arr"};
-  else if(!t.arr2)p={action:"arr",field:"arr2",mk:tk,dd:tdd,second:true,first};   // druhá časť (trhačka)
-  else p={action:"done",field:"dep2",mk:tk,dd:tdd,arr:t.arr2,first,second:t.arr2+"–"+t.dep2};
+  if(ts==="work")p={action:"dep",mk:tk,dd:tdd,arr:t.arr,pause:t.po?t.po+"–"+t.pd:""};
+  else if(ts==="pause")p={action:"back",mk:tk,dd:tdd,arr:t.arr,po:t.po};
+  else if(ts==="none"&&ys==="work"&&sinceY(y.arr)<=16*60)p={action:"dep",mk:yk,dd:ddOf(yd),arr:y.arr,overnight:true,pause:y.po?y.po+"–"+y.pd:""};
+  else if(ts==="none")p={action:"arr"};
+  else if(!t.po)p={action:"back",mk:tk,dd:tdd,arr:t.arr,po:t.dep,fromDep:true};   // odišiel – ak má trhačku, vracia sa z pauzy
+  else p={action:"done",mk:tk,dd:tdd,arr:t.arr,dep:t.dep,pause:t.po+"–"+t.pd};
   st.punch=p;
 }
 /* moje dáta za mesiac: ak mám práve otvorenú vlastnú tabuľku toho mesiaca, použije sa tá istá kópia */
@@ -475,25 +496,30 @@ async function doPunch(fix,at){
   try{
     await refreshPunch(); // čerstvý stav tesne pred zápisom
     const p=st.punch;
-    if(asked&&at&&(p.action!==asked.action||p.field!==asked.field)){st.err="Stav sa medzitým zmenil, skontrolujte tlačidlo nižšie.";st.punching=false;render();return;}
-    let mk,dd,field,time;
+    if(asked&&at&&p.action!==asked.action){st.err="Stav sa medzitým zmenil, skontrolujte tlačidlo nižšie.";st.punching=false;render();return;}
+    let mk,dd,time,patch,msg;
     if(p.action==="arr"){
-      const up=roundAt("up",at);time=hmOf(up);mk=mkOf(up);dd=ddOf(up);field=p.field;
-      if(p.field==="arr2"&&(mk!==p.mk||dd!==p.dd))field="arr"; // zaokrúhlenie preskočilo na ďalší deň
+      const up=roundAt("up",at);time=hmOf(up);mk=mkOf(up);dd=ddOf(up);patch={arr:time};msg="Príchod zaznamenaný: "+time;
+    }
+    else if(p.action==="back"){
+      // návrat z pauzy doma: zaokrúhlené nahor; ak bol zapísaný odchod, stáva sa začiatkom pauzy
+      time=hmOf(roundAt("up",at));mk=p.mk;dd=p.dd;
+      if(toMin(time)<=toMin(p.po)){st.err="Návrat "+time+" nie je neskôr ako začiatok pauzy "+p.po+".";st.punching=false;render();return;}
+      patch={po:p.po,pd:time,dep:""};msg="Návrat z pauzy zaznamenaný: "+time+" (pauza "+p.po+"–"+time+")";
     }
     else if(p.action==="dep"||(p.action==="done"&&fix)){
-      time=hmOf(roundAt("down",at));mk=p.mk;dd=p.dd;field=p.field;
+      time=hmOf(roundAt("down",at));mk=p.mk;dd=p.dd;patch={dep:time};msg="Odchod zaznamenaný: "+time;
       // odchod zaokrúhlený nadol nesmie skončiť pred príchodom (inak by vyšla 24-hodinová zmena)
       if(!p.overnight&&toMin(time)<=toMin(p.arr)){st.err="Odchod "+time+" nie je neskôr ako príchod "+p.arr+". Zapíšte ho o chvíľu alebo upravte čas ručne v tabuľke.";st.punching=false;render();return;}
     }
     else{st.punching=false;render();return;}
     const data=await myMonth(mk);
-    data[dd]={...(data[dd]||{}),[field]:time};
+    const nc={...(data[dd]||{}),...patch};if(nc.dep==="")delete nc.dep;data[dd]=nc;
     const {error}=await sb.from("dochadzka").upsert({emp_id:st.me,mesiac:mk,data,updated_at:new Date().toISOString()});
     if(error){st.err="Zápis sa nepodaril, skúste znova.";}
     else{
       st.err="";st.lastEdit=Date.now();
-      st.punchMsg=(field[0]==="a"?"Príchod":"Odchod")+(field.slice(-1)==="2"?" (2. časť)":"")+" zaznamenaný: "+time;
+      st.punchMsg=msg;
       if(st.role==="admin")await loadBank();
     }
     await refreshPunch();
@@ -502,17 +528,19 @@ async function doPunch(fix,at){
 }
 /* okno po prihlásení */
 function punchModal(){
-  const a=st.punchAsk;if(!a||!st.punch||st.punch.action!==a.action||st.punch.field!==a.field)return"";
-  const arr=a.action==="arr";const t=hmOf(roundAt(arr?"up":"down",a.at));const real=hmOf(a.at);
-  const p=st.punch;const two=p.second?" (2. časť)":"";
+  const a=st.punchAsk;const p=st.punch;if(!a||!p||p.action!==a.action)return"";
+  const up=a.action!=="dep";const t=hmOf(roundAt(up?"up":"down",a.at));const real=hmOf(a.at);
+  const title=a.action==="arr"?"Zapísať príchod?":(a.action==="back"?"Zapísať návrat z pauzy?":"Zapísať odchod?");
+  const btn=a.action==="arr"?"Zapísať príchod":(a.action==="back"?"Zapísať návrat":"Zapísať odchod");
+  const info=a.action==="dep"?` Príchod ${p.overnight?"včera ":""}o ${p.arr}${p.pause?`, pauza doma ${p.pause}`:""}.`:(a.action==="back"?` Pauza doma od ${p.po}.`:"");
   return `<div class="modalBack" onclick="closeAsk()">
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="askT" onclick="event.stopPropagation()">
-      <div class="modalTitle" id="askT">${arr?"Zapísať príchod":"Zapísať odchod"}${two}?</div>
-      <div class="askTime ${arr?"arr":"dep"}">${t}</div>
-      <div class="modalSub">Otvorené o ${real}${real!==t?` – ${arr?"príchod sa zaokrúhľuje nahor":"odchod sa zaokrúhľuje nadol"} na štvrťhodinu`:""}.${arr?"":` Príchod ${p.overnight?"včera ":""}o ${p.arr}.`}${p.first?` Dnes už odpracované: ${p.first}.`:""}</div>
+      <div class="modalTitle" id="askT">${title}</div>
+      <div class="askTime ${up?"arr":"dep"}">${t}</div>
+      <div class="modalSub">Otvorené o ${real}${real!==t?` – zaokrúhľuje sa ${up?"nahor":"nadol"} na štvrťhodinu`:""}.${info}</div>
       <div class="modalRow">
         <button class="modalCancel" onclick="closeAsk()">Nezapísať</button>
-        <button class="modalOk" id="punchYes" onclick="doPunch(false,st.punchAsk.at)">${arr?"Zapísať príchod":"Zapísať odchod"}</button>
+        <button class="modalOk" id="punchYes" onclick="doPunch(false,st.punchAsk.at)">${btn}</button>
       </div>
       <div class="askHint">Čas môžete kedykoľvek upraviť aj ručne v tabuľke.</div>
     </div></div>`;
@@ -522,16 +550,22 @@ function punchCard(){
   const p=st.punch;if(!p)return"";
   const dis=st.punching?"disabled":"";let h=`<div class="punch">`;
   if(st.punchMsg)h+=`<div class="punchOk">✓ ${esc(st.punchMsg)}</div>`;
-  const two=p.second===true?`<span class="pbTwo">2. časť</span>`:"";
   if(p.action==="arr"){
-    h+=`<button class="punchBtn arr" ${dis} onclick="doPunch()"><span class="pbLbl">Príchod${two}</span><span class="pbTime" id="punchTime" data-dir="up">${hmOf(roundAt("up"))}</span></button>
-        <div class="punchSub">${p.first?`Dnes už: ${p.first}. Ak máte trhačku, zapíšte 2. príchod. `:""}Príchod sa zaokrúhľuje nahor na štvrťhodinu.</div>`;
+    h+=`<button class="punchBtn arr" ${dis} onclick="doPunch()"><span class="pbLbl">Príchod</span><span class="pbTime" id="punchTime" data-dir="up">${hmOf(roundAt("up"))}</span></button>
+        <div class="punchSub">Príchod sa zaokrúhľuje nahor na štvrťhodinu.</div>`;
   }else if(p.action==="dep"){
-    h+=`<button class="punchBtn dep" ${dis} onclick="doPunch()"><span class="pbLbl">Odchod${two}</span><span class="pbTime" id="punchTime" data-dir="down">${hmOf(roundAt("down"))}</span></button>
-        <div class="punchSub">${p.first?`Dnes už: ${p.first}. `:""}Príchod ${p.overnight?"včera ":""}o ${p.arr}. Odchod sa zaokrúhľuje nadol na štvrťhodinu.</div>`;
+    h+=`<button class="punchBtn dep" ${dis} onclick="doPunch()"><span class="pbLbl">Odchod</span><span class="pbTime" id="punchTime" data-dir="down">${hmOf(roundAt("down"))}</span></button>
+        <div class="punchSub">Príchod ${p.overnight?"včera ":""}o ${p.arr}${p.pause?`, pauza doma ${p.pause}`:""}. Odchod sa zaokrúhľuje nadol na štvrťhodinu.</div>`;
+  }else if(p.action==="back"&&!p.fromDep){
+    h+=`<button class="punchBtn arr" ${dis} onclick="doPunch()"><span class="pbLbl">Návrat z pauzy</span><span class="pbTime" id="punchTime" data-dir="up">${hmOf(roundAt("up"))}</span></button>
+        <div class="punchSub">Pauza doma od ${p.po}. Návrat sa zaokrúhľuje nahor na štvrťhodinu.</div>`;
+  }else if(p.action==="back"){
+    h+=`<div class="punchDone">Dnes: <b>${p.arr}–${p.po}</b></div>
+        <button class="punchBtn arr small" ${dis} onclick="doPunch()"><span class="pbLbl">Trhačka – návrat z pauzy</span><span class="pbTime" id="punchTime" data-dir="up">${hmOf(roundAt("up"))}</span></button>
+        <div class="punchSub">Ak ste boli doma na pauze a vraciate sa do práce, ťuknite sem – čas od ${p.po} doteraz sa odpočíta ako pauza.</div>`;
   }else{
-    h+=`<div class="punchDone">Dnes: <b>${p.first}</b> · <b>${p.second}</b></div>
-        <button class="punchFix" ${dis} onclick="doPunch(true)">Opraviť 2. odchod na <span id="punchTime" data-dir="down">${hmOf(roundAt("down"))}</span></button>`;
+    h+=`<div class="punchDone">Dnes: <b>${p.arr}–${p.dep}</b> · pauza doma <b>${p.pause}</b></div>
+        <button class="punchFix" ${dis} onclick="doPunch(true)">Opraviť odchod na <span id="punchTime" data-dir="down">${hmOf(roundAt("down"))}</span></button>`;
   }
   return h+`</div>`;
 }
@@ -565,26 +599,26 @@ function setCell(day,field,value){
   if(st.role==="admin")st.bank[st.activeEmp]=st.monthData;
   st.lastEdit=Date.now();
   patchRow(day); saveMonth();
-  if(st.me&&st.activeEmp===st.me&&/^(arr|dep)2?$/.test(field))refreshPunch().then(()=>{const el=document.getElementById("punchBox");if(el)el.innerHTML=punchCard();});
+  if(st.me&&st.activeEmp===st.me&&/^(arr|dep|po|pd)$/.test(field))refreshPunch().then(()=>{const el=document.getElementById("punchBox");if(el)el.innerHTML=punchCard();});
 }
 function patchRow(day){
   const rs=rowsFor(st.monthData,st.year,st.month);const r=rs[day-1];const sm=summaryFor(rs,st.year,st.month);
   const $=id=>document.getElementById(id);
   const set=(id,v)=>{const el=$(id);if(el&&el.value!==v)el.value=v;};
   const txt=(id,v)=>{const el=$(id);if(el)el.textContent=v;};
-  set("arr-"+day,r.arr);set("dep-"+day,r.dep);set("arr2-"+day,r.arr2);set("dep2-"+day,r.dep2);set("note-"+day,r.note);
+  set("arr-"+day,r.arr);set("dep-"+day,r.dep);set("po-"+day,r.po);set("pd-"+day,r.pd);set("note-"+day,r.note);
   txt("brk-"+day,r.brk?r.brk.toFixed(1):"—");txt("wrk-"+day,r.worked?h2(r.worked):"—");
   [["lunch","lu-"],["dinner","di-"]].forEach(([f,pre])=>{const b=$(pre+day);if(b){b.classList.toggle("on",r[f]);b.textContent=r[f]?"✕":"";b.setAttribute("aria-pressed",r[f]?"true":"false");}});
   txt("ft-tw",h2(sm.tw));txt("ft-lu",sm.lunch);txt("ft-di",sm.dinner);
 }
 function addSplit(day){
   const dd=String(day).padStart(2,"0");st.splitOpen[dd]=true;render();
-  const el=document.getElementById("arr2-"+day);if(el)el.focus();
+  const el=document.getElementById("po-"+day);if(el)el.focus();
 }
 function removeSplit(day){
   const dd=String(day).padStart(2,"0");delete st.splitOpen[dd];
   const c={...(st.monthData[dd]||{})};
-  if(c.arr2||c.dep2){delete c.arr2;delete c.dep2;st.monthData[dd]=c;if(st.role==="admin")st.bank[st.activeEmp]=st.monthData;st.lastEdit=Date.now();saveMonth();}
+  if(c.po||c.pd){delete c.po;delete c.pd;st.monthData[dd]=c;if(st.role==="admin")st.bank[st.activeEmp]=st.monthData;st.lastEdit=Date.now();saveMonth();}
   render();
   if(st.me&&st.activeEmp===st.me)refreshPunch().then(()=>{const el=document.getElementById("punchBox");if(el)el.innerHTML=punchCard();});
 }
@@ -594,7 +628,7 @@ function cellKey(ev,pre,day){
   if(ev.key!=="Enter")return;
   ev.preventDefault();
   const nd=day+(ev.shiftKey?-1:1);
-  const nx=document.getElementById(pre+nd)||document.getElementById(pre.replace("2","")+nd);
+  const nx=document.getElementById(pre+nd)||document.getElementById((pre==="po-"?"arr-":pre==="pd-"?"dep-":pre)+nd);
   if(nx){nx.focus();if(nx.select)nx.select();}else ev.target.blur();
 }
 async function changeMonth(d){
@@ -613,7 +647,7 @@ function rowsFor(monthData,year,month){
     const dt=new Date(year,month,day);const dow=dt.getDay();const dd=String(day).padStart(2,"0");
     const c=monthData[dd]||{};const s=dayCalc(c);const hd=hol[fmt(dt)];
     out.push({day,dd,dow,isSat:dow===6,isSun:dow===0,hol:!!(hd&&hd.prem),holName:hd?hd.name:"",
-      arr:c.arr||"",dep:c.dep||"",arr2:c.arr2||"",dep2:c.dep2||"",split:!!(c.arr2||c.dep2),lunch:!!c.lunch,dinner:!!c.dinner,note:c.note||"",
+      arr:c.arr||"",dep:c.dep||"",po:c.po||"",pd:c.pd||"",split:!!(c.po||c.pd),lunch:!!c.lunch,dinner:!!c.dinner,note:c.note||"",
       brk:s?s.brk:0,worked:s?s.worked:0,night:s?s.night:0});
   }
   return out;
@@ -692,7 +726,7 @@ function gridHtml(rs,sm){
   rs.forEach(r=>{
     const cls=r.hol?"hol":(r.isSun?"sun":(r.isSat?"sat":""));const d=r.day;
     html+=`<tr class="${cls}${r.split||st.splitOpen[r.dd]?" has-sub":""}">
-      <td class="date"${r.holName?` title="${esc(r.holName)}"`:""}><span class="dnum">${d}.</span><span class="dow">${DOW[r.dow]}</span>${r.hol?'<span class="holTag">●</span>':''}${r.split||st.splitOpen[r.dd]?"":`<button class="splitBtn" tabindex="-1" title="Pridať 2. príchod a odchod (trhačka)" aria-label="Pridať 2. časť dňa ${d}." onclick="addSplit(${d})">+</button>`}</td>
+      <td class="date"${r.holName?` title="${esc(r.holName)}"`:""}><span class="dnum">${d}.</span><span class="dow">${DOW[r.dow]}</span>${r.hol?'<span class="holTag">●</span>':''}${r.split||st.splitOpen[r.dd]?"":`<button class="splitBtn" tabindex="-1" title="Pridať pauzu doma (trhačka)" aria-label="Pridať pauzu doma ${d}." onclick="addSplit(${d})">+</button>`}</td>
       <td><input class="timeText" id="arr-${d}" type="text" inputmode="numeric" autocomplete="off" value="${r.arr}" placeholder="–:–" aria-label="Príchod ${d}." onfocus="this.select()" onkeydown="cellKey(event,'arr-',${d})" onchange="setCell(${d},'arr',parseTime(this.value))"></td>
       <td><input class="timeText" id="dep-${d}" type="text" inputmode="numeric" autocomplete="off" value="${r.dep}" placeholder="–:–" aria-label="Odchod ${d}." onfocus="this.select()" onkeydown="cellKey(event,'dep-',${d})" onchange="setCell(${d},'dep',parseTime(this.value))"></td>
       <td class="num" style="opacity:.7" id="brk-${d}">${r.brk?r.brk.toFixed(1):"—"}</td>
@@ -702,10 +736,10 @@ function gridHtml(rs,sm){
       <td class="note"><input class="noteInput" id="note-${d}" type="text" value="${esc(r.note)}" placeholder="${r.holName?esc(r.holName.split(" – ")[0]):"…"}" aria-label="Poznámka ${d}." onkeydown="cellKey(event,'note-',${d})" onchange="setCell(${d},'note',this.value)"></td>
     </tr>`;
     if(r.split||st.splitOpen[r.dd])html+=`<tr class="${cls} sub">
-      <td class="date"><span class="subLbl">↳ 2. časť</span></td>
-      <td><input class="timeText" id="arr2-${d}" type="text" inputmode="numeric" autocomplete="off" value="${r.arr2}" placeholder="–:–" aria-label="2. príchod ${d}." onfocus="this.select()" onkeydown="cellKey(event,'arr2-',${d})" onchange="setCell(${d},'arr2',parseTime(this.value))"></td>
-      <td><input class="timeText" id="dep2-${d}" type="text" inputmode="numeric" autocomplete="off" value="${r.dep2}" placeholder="–:–" aria-label="2. odchod ${d}." onfocus="this.select()" onkeydown="cellKey(event,'dep2-',${d})" onchange="setCell(${d},'dep2',parseTime(this.value))"></td>
-      <td colspan="5" class="subInfo">trhačka – pauza doma sa odpočíta, hodiny sú v riadku vyššie <button class="rmSplit" tabindex="-1" onclick="removeSplit(${d})" aria-label="Zrušiť 2. časť dňa ${d}.">✕ zrušiť</button></td>
+      <td class="date"><span class="subLbl">↳ pauza doma</span></td>
+      <td><span class="subHd">od</span><input class="timeText" id="po-${d}" type="text" inputmode="numeric" autocomplete="off" value="${r.po}" placeholder="–:–" aria-label="Pauza doma od ${d}." onfocus="this.select()" onkeydown="cellKey(event,'po-',${d})" onchange="setCell(${d},'po',parseTime(this.value))"></td>
+      <td><span class="subHd">do</span><input class="timeText" id="pd-${d}" type="text" inputmode="numeric" autocomplete="off" value="${r.pd}" placeholder="–:–" aria-label="Pauza doma do ${d}." onfocus="this.select()" onkeydown="cellKey(event,'pd-',${d})" onchange="setCell(${d},'pd',parseTime(this.value))"></td>
+      <td colspan="5" class="subInfo">trhačka – pauza sa odpočíta od príchodu po odchod <button class="rmSplit" tabindex="-1" onclick="removeSplit(${d})" aria-label="Zrušiť pauzu ${d}.">✕ zrušiť</button></td>
     </tr>`;
   });
   html+=`</tbody><tfoot><tr>
@@ -734,7 +768,7 @@ function summaryHtml(rs,sm){
     <tr class="accent"><td>Nadčas (nad fond)</td><td class="v">${h2(sm.overtime)} h</td></tr>
   </tbody></table>
   <div class="sumNote">Obedy: <b>${sm.lunch}</b> · Večere: <b>${sm.dinner}</b> · Strava spolu: <b>${sm.lunch+sm.dinner}</b></div>
-  <div class="sumNote2">Prestávka automaticky: 5–12,5 h → 0,5 h, nad 12,5 h → 1 h. Pri trhačke sa namiesto toho odpočíta pauza doma (čas medzi odchodom a 2. príchodom). Nadčas = odpracované hodiny nad mesačný pracovný fond.</div>
+  <div class="sumNote2">Prestávka automaticky: 5–12,5 h → 0,5 h, nad 12,5 h → 1 h. Pri trhačke sa namiesto toho odpočíta pauza doma (od – do). Nadčas = odpracované hodiny nad mesačný pracovný fond.</div>
   ${holNote()}
   </div>`;
 }
@@ -759,11 +793,12 @@ function adminSummaryHtml(){
     Object.keys(T).forEach(k=>T[k]+=sm[k]);fund=sm.fund;
     let today="",atWork=false;
     if(isCur){const c=md[tdd]||{};const y=ydd?(md[ydd]||{}):{};
-      const oc=openSeg(c),oy=openSeg(y);
-      const done=[c.arr&&c.dep?c.arr+"–"+c.dep:"",c.arr2&&c.dep2?c.arr2+"–"+c.dep2:""].filter(Boolean).join(", ");
-      if(oc){atWork=true;today=`<span class="badge in">● v práci od ${c[oc.a]}</span>`+(oc.a==="arr2"?` <span class="badge out">${done}</span>`:"");}
-      else if(!c.arr&&oy&&(1440-toMin(y[oy.a])+now.getHours()*60+now.getMinutes())<=16*60){atWork=true;today=`<span class="badge in">● v práci od včera ${y[oy.a]}</span>`;}
-      else today=done?`<span class="badge out">${done}</span>`:`<span class="badge none">—</span>`;
+      const cs=dayState(c),ys=dayState(y);
+      const pz=c.po&&c.pd?` <span class="badge out">pauza ${c.po}–${c.pd}</span>`:"";
+      if(cs==="work"){atWork=true;today=`<span class="badge in">● v práci od ${c.arr}</span>`+pz;}
+      else if(cs==="pause")today=`<span class="badge pause">doma na pauze od ${c.po}</span>`;
+      else if(cs==="none"&&ys==="work"&&(1440-toMin(y.arr)+now.getHours()*60+now.getMinutes())<=16*60){atWork=true;today=`<span class="badge in">● v práci od včera ${y.arr}</span>`;}
+      else today=cs==="done"?`<span class="badge out">${c.arr}–${c.dep}</span>`+pz:`<span class="badge none">—</span>`;
       if(atWork)inCnt++;}
     body+=`<tr class="${atWork?"atWork":""}">
       <td class="nm"><button class="nameBtn" id="emp-${e.id}" onclick="openEmp('${e.id}')">${esc(e.name)} ›</button></td>
@@ -805,7 +840,7 @@ async function printEmps(ids){
     let q=sb.from("dochadzka").select("emp_id,data").eq("mesiac",mk);
     if(list.length===1)q=q.eq("emp_id",list[0].id);
     const {data}=await q;
-    (data||[]).forEach(r=>{bank[r.emp_id]=r.data||{};});
+    (data||[]).forEach(r=>{bank[r.emp_id]=normMonth(r.data||{});});
   }catch(e){alert("Nepodarilo sa načítať dáta na tlač.");st.printMode=false;return;}
 
   const mon=MONTHS[st.month]+" "+st.year;
@@ -840,7 +875,7 @@ async function printEmps(ids){
       const e=v=>v?`<td>${v}</td>`:`<td class="mut">–</td>`;
       body+=`<tr class="${cls}">
         <td class="pd"><b>${r.day}.</b> <span>${DOW[r.dow]}</span></td>
-        ${e(r.arr)}${e(r.dep)}${sp?e(r.arr2)+e(r.dep2):""}${e(r.brk?r.brk.toFixed(1):"")}
+        ${e(r.arr)}${e(r.dep)}${sp?e(r.po)+e(r.pd):""}${e(r.brk?r.brk.toFixed(1):"")}
         ${r.worked?`<td class="pb">${h2(r.worked)}</td>`:`<td class="mut">–</td>`}
         <td>${r.lunch?"✕":""}</td><td>${r.dinner?"✕":""}</td>
         <td class="pn">${note}</td></tr>`;
@@ -851,7 +886,7 @@ async function printEmps(ids){
       <div class="pgrow"><table class="ptab${sp?" split":""}">
         <colgroup><col class="cD"><col class="cT"><col class="cT">${sp?'<col class="cT2"><col class="cT2">':""}<col class="cP"><col class="cW"><col class="cX"><col class="cX"><col class="cN"></colgroup>
         <thead><tr>
-        <th class="pd">Dátum</th><th>Príchod</th><th>Odchod</th>${sp?"<th>2. príchod</th><th>2. odchod</th>":""}<th>${sp?"Prest.":"Prestávka"}</th><th>Odprac.</th><th>Obed</th><th>Večera</th><th class="pn">Poznámka</th>
+        <th class="pd">Dátum</th><th>Príchod</th><th>Odchod</th>${sp?"<th>Pauza od</th><th>Pauza do</th>":""}<th>${sp?"Prest.":"Prestávka"}</th><th>Odprac.</th><th>Obed</th><th>Večera</th><th class="pn">Poznámka</th>
       </tr></thead><tbody>${body}</tbody>
       <tfoot><tr><td colspan="${sp?6:4}" style="text-align:right">Spolu odpracované</td>
         <td class="pb">${h2(sm.tw)}</td><td>${sm.lunch}</td><td>${sm.dinner}</td><td></td></tr></tfoot>
